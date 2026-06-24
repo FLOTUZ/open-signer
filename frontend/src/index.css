@@ -1,0 +1,1209 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #1a1a1a;
+  background-color: #f5f5f5;
+}
+
+body {
+  min-height: 100vh;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+/* ==========================================
+   LOGIN
+   ========================================== */
+.login-page {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background: #ffffff;
+}
+
+.login-box {
+  width: 100%;
+  max-width: 380px;
+  padding: 2.5rem;
+}
+
+.login-logo {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 0.25rem;
+  letter-spacing: -0.5px;
+}
+
+.login-subtitle {
+  color: #888;
+  font-size: 0.85rem;
+  margin-bottom: 2rem;
+}
+
+.login-hint {
+  margin-top: 1.5rem;
+  padding: 0.75rem;
+  background: #fafafa;
+  border: 1px solid #eee;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  color: #888;
+}
+
+.login-hint code {
+  background: #f0f0f0;
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  font-size: 0.7rem;
+  color: #333;
+}
+
+/* ==========================================
+   LAYOUT: SIDEBAR + MAIN
+   ========================================== */
+.layout {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.sidebar {
+  width: 260px;
+  background: #ffffff;
+  border-right: 1px solid #e8e8e8;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  height: 100%;
+  overflow-y: auto;
+}
+
+.sidebar-header {
+  padding: 1.5rem;
+  border-bottom: 1px solid #e8e8e8;
+}
+
+.sidebar-user {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.sidebar-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: #1a1a1a;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.8rem;
+}
+
+.sidebar-user-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.sidebar-user-name {
+  font-weight: 600;
+  font-size: 0.85rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebar-user-role {
+  font-size: 0.7rem;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.sidebar-section-label {
+  padding: 1.25rem 1.5rem 0.5rem;
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: #aaa;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.sidebar-nav {
+  flex: 1;
+  padding: 0.5rem 0;
+}
+
+.sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 1.5rem;
+  color: #555;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  border: none;
+  background: none;
+  width: 100%;
+  text-align: left;
+}
+
+.sidebar-link:hover {
+  background: #f5f5f5;
+  color: #1a1a1a;
+}
+
+.sidebar-link.active {
+  background: #1a1a1a;
+  color: #ffffff;
+  border-radius: 0;
+}
+
+.sidebar-link svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.sidebar-footer {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid #e8e8e8;
+}
+
+.sidebar-footer button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0;
+  color: #888;
+  font-size: 0.8rem;
+  cursor: pointer;
+  border: none;
+  background: none;
+  font-family: inherit;
+  transition: color 0.15s;
+}
+
+.sidebar-footer button:hover {
+  color: #1a1a1a;
+}
+
+/* ==========================================
+   MAIN CONTENT
+   ========================================== */
+.main {
+  flex: 1;
+  background: #f5f5f5;
+  overflow-y: auto;
+}
+
+.main-header {
+  padding: 1.5rem 2rem;
+  background: #ffffff;
+  border-bottom: 1px solid #e8e8e8;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.page-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+
+.page-count {
+  color: #888;
+  font-size: 0.85rem;
+  margin-top: 0.25rem;
+}
+
+.main-content {
+  padding: 2rem;
+}
+
+/* ==========================================
+   FORMS
+   ========================================== */
+.form-group {
+  margin-bottom: 1.25rem;
+}
+
+label {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 600;
+  margin-bottom: 0.4rem;
+  color: #333;
+}
+
+input[type="text"],
+input[type="email"],
+input[type="password"] {
+  width: 100%;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 0.85rem;
+  background: #ffffff;
+  color: #1a1a1a;
+  transition: border-color 0.15s;
+}
+
+input:focus {
+  outline: none;
+  border-color: #1a1a1a;
+}
+
+input::placeholder {
+  color: #bbb;
+}
+
+textarea {
+  width: 100%;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 0.85rem;
+  background: #ffffff;
+  color: #1a1a1a;
+  resize: vertical;
+  min-height: 80px;
+}
+
+textarea:focus {
+  outline: none;
+  border-color: #1a1a1a;
+}
+
+/* ==========================================
+   BUTTONS
+   ========================================== */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.55rem 1rem;
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  border: 1px solid transparent;
+}
+
+.btn-black {
+  background: #1a1a1a;
+  color: #ffffff;
+  border-color: #1a1a1a;
+}
+
+.btn-black:hover {
+  background: #333;
+}
+
+.btn-outline {
+  background: #ffffff;
+  color: #1a1a1a;
+  border-color: #ddd;
+}
+
+.btn-outline:hover {
+  background: #f5f5f5;
+  border-color: #bbb;
+}
+
+.btn-danger-outline {
+  background: #ffffff;
+  color: #d00;
+  border-color: #fcc;
+}
+
+.btn-danger-outline:hover {
+  background: #fef2f2;
+  border-color: #d00;
+}
+
+.btn-sm {
+  padding: 0.35rem 0.65rem;
+  font-size: 0.75rem;
+}
+
+.btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ==========================================
+   CARDS
+   ========================================== */
+.card {
+  background: #ffffff;
+  border: 1px solid #e8e8e8;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.card-header {
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid #e8e8e8;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.card-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.card-body {
+  padding: 1.5rem;
+}
+
+.card-compact {
+  max-width: 480px;
+}
+
+/* ==========================================
+   TABLES
+   ========================================== */
+.table-wrap {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th {
+  text-align: left;
+  padding: 0.75rem 1rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid #e8e8e8;
+  background: #fafafa;
+}
+
+td {
+  padding: 0.75rem 1rem;
+  font-size: 0.85rem;
+  border-bottom: 1px solid #f0f0f0;
+  color: #333;
+}
+
+tr:last-child td {
+  border-bottom: none;
+}
+
+tr:hover td {
+  background: #fafafa;
+}
+
+/* ==========================================
+   BADGES & STATUS
+   ========================================== */
+.badge {
+  display: inline-flex;
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.badge-active {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.badge-revoked {
+  background: #ffebee;
+  color: #c62828;
+}
+
+.badge-admin {
+  background: #1a1a1a;
+  color: #fff;
+}
+
+.badge-client {
+  background: #f0f0f0;
+  color: #555;
+}
+
+/* ==========================================
+   ALERTS & KEY DISPLAY
+   ========================================== */
+.alert {
+  padding: 0.75rem 1rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  margin-bottom: 1.25rem;
+  border: 1px solid transparent;
+}
+
+.alert-error {
+  background: #fef2f2;
+  border-color: #fecaca;
+  color: #991b1b;
+}
+
+.alert-success {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+  color: #166534;
+}
+
+.key-box {
+  background: #fafafa;
+  border: 1px dashed #ccc;
+  padding: 0.75rem 1rem;
+  border-radius: 6px;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  font-size: 0.8rem;
+  color: #1a1a1a;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  word-break: break-all;
+  margin-bottom: 1rem;
+}
+
+.code-block {
+  background: #1a1a1a;
+  color: #e8e8e8;
+  padding: 1rem;
+  border-radius: 6px;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  font-size: 0.75rem;
+  overflow-x: auto;
+  white-space: pre;
+  line-height: 1.6;
+  margin-top: 0.75rem;
+}
+
+.code-block .code-comment {
+  color: #6a737d;
+}
+
+.code-block .code-key {
+  color: #79c0ff;
+}
+
+.code-block .code-string {
+  color: #a5d6ff;
+}
+
+/* ==========================================
+   MONO & TRUNCATE
+   ========================================== */
+.mono {
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  font-size: 0.75rem;
+}
+
+.truncate {
+  max-width: 180px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+/* ==========================================
+   FILE INPUT
+   ========================================== */
+.file-input-wrap {
+  position: relative;
+}
+
+.file-input-wrap input[type="file"] {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px dashed #ccc;
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 0.8rem;
+  background: #fafafa;
+  cursor: pointer;
+}
+
+.file-input-wrap input[type="file"]:hover {
+  border-color: #999;
+}
+
+/* ==========================================
+   EMPTY STATE
+   ========================================== */
+.empty-state {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: #aaa;
+  font-size: 0.85rem;
+}
+
+/* ==========================================
+   GRID LAYOUTS
+   ========================================== */
+.grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    display: none;
+  }
+
+  .grid-2 {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ==========================================
+   ANIMATIONS
+   ========================================== */
+@keyframes fadeSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ==========================================
+   PÁGINA DE FIRMA PÚBLICA (/firmar/:id)
+   ========================================== */
+
+.sign-page-root {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f0f4f8 0%, #e2e8f0 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem;
+  font-family: 'Inter', sans-serif;
+  color: #2d3748;
+}
+
+.sign-page-container {
+  width: 100%;
+  max-width: 520px;
+  animation: fadeSlideIn 0.4s ease;
+}
+
+/* Header */
+.sign-page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+}
+
+.sign-page-logo {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  color: #1a365d;
+  font-size: 1.2rem;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+}
+
+.sign-page-badge {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background: #ebf8ff;
+  color: #2b6cb0;
+  border: 1px solid #bee3f8;
+  padding: 0.25rem 0.65rem;
+  border-radius: 20px;
+}
+
+/* Tarjeta del documento */
+.sign-doc-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+  border-radius: 12px;
+  padding: 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.sign-doc-icon {
+  flex-shrink: 0;
+  width: 52px;
+  height: 52px;
+  background: #ebf8ff;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #3182ce;
+}
+
+.sign-doc-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.sign-doc-name {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #2d3748;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sign-doc-meta {
+  font-size: 0.75rem;
+  color: #718096;
+  margin-top: 0.15rem;
+}
+
+.sign-doc-hash {
+  font-size: 0.7rem;
+  color: #718096;
+  margin-top: 0.25rem;
+}
+
+.sign-doc-hash code {
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  color: #2b6cb0;
+  background: #f7fafc;
+  padding: 0.1rem 0.3rem;
+  border-radius: 4px;
+}
+
+.sign-ttl-badge {
+  flex-shrink: 0;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #dd6b20;
+  background: #fffaf0;
+  border: 1px solid #fbd38d;
+  padding: 0.3rem 0.6rem;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+
+/* Aviso de seguridad */
+.sign-security-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  background: #f0fff4;
+  border: 1px solid #c6f6d5;
+  border-radius: 8px;
+  padding: 0.85rem 1rem;
+  margin-bottom: 1.25rem;
+  font-size: 0.78rem;
+  color: #276749;
+  line-height: 1.5;
+}
+
+.sign-security-notice svg {
+  flex-shrink: 0;
+  margin-top: 1px;
+  color: #38a169;
+}
+
+/* Formulario */
+.sign-form-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.02);
+  border-radius: 14px;
+  padding: 1.75rem;
+}
+
+.sign-form-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #1a365d;
+  margin-bottom: 0.3rem;
+}
+
+.sign-form-subtitle {
+  font-size: 0.8rem;
+  color: #718096;
+  margin-bottom: 1.75rem;
+}
+
+/* Steps de firma */
+.sign-steps-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.sign-step-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+}
+
+.sign-step-number {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  background: #edf2f7;
+  color: #718096;
+  border: 1px solid #e2e8f0;
+  transition: all 0.2s;
+  margin-top: 0.1rem;
+}
+
+.sign-step-item.done .sign-step-number {
+  background: #e6fffa;
+  color: #0d9488;
+  border-color: #99f6e4;
+}
+
+.sign-step-content {
+  flex: 1;
+}
+
+.sign-step-label {
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #4a5568;
+  margin-bottom: 0.4rem;
+}
+
+/* Drop zone de archivos */
+.sign-file-drop {
+  position: relative;
+  background: #f7fafc;
+  border: 1px dashed #cbd5e0;
+  border-radius: 8px;
+  padding: 0.65rem 0.9rem;
+  transition: all 0.2s;
+  overflow: hidden;
+}
+
+.sign-file-drop:hover {
+  border-color: #3182ce;
+  background: #ebf8ff;
+}
+
+.sign-file-drop input[type="file"] {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+  width: 100%;
+  height: 100%;
+}
+
+.sign-file-placeholder {
+  font-size: 0.78rem;
+  color: #718096;
+  display: flex;
+  align-items: center;
+}
+
+.sign-file-selected {
+  font-size: 0.78rem;
+  color: #2b6cb0;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+}
+
+/* Campo de contraseña */
+.sign-password-wrap {
+  position: relative;
+  display: flex;
+}
+
+.sign-password-wrap input {
+  background: #f7fafc;
+  border: 1px solid #cbd5e0;
+  border-radius: 8px;
+  color: #2d3748;
+  padding: 0.6rem 2.5rem 0.6rem 0.9rem;
+  font-size: 0.85rem;
+  font-family: inherit;
+  width: 100%;
+  transition: all 0.2s;
+}
+
+.sign-password-wrap input:focus {
+  outline: none;
+  border-color: #3182ce;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.15);
+}
+
+.sign-password-wrap input::placeholder {
+  color: #a0aec0;
+}
+
+.sign-toggle-pass {
+  position: absolute;
+  right: 0.6rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #718096;
+  font-size: 1rem;
+  padding: 0;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+}
+
+.sign-toggle-pass:hover {
+  color: #2d3748;
+}
+
+/* Error box */
+.sign-error-box {
+  background: #fff5f5;
+  border: 1px solid #feb2b2;
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  font-size: 0.78rem;
+  color: #c53030;
+  margin-bottom: 1rem;
+}
+
+/* Botón principal */
+.sign-btn-primary {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.9rem;
+  background: linear-gradient(135deg, #3182ce, #2b6cb0);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s;
+  letter-spacing: 0.2px;
+  box-shadow: 0 4px 6px -1px rgba(49, 130, 206, 0.15);
+}
+
+.sign-btn-primary:hover:not(:disabled) {
+  background: linear-gradient(135deg, #4299e1, #3182ce);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 20px rgba(49, 130, 206, 0.25);
+}
+
+.sign-btn-primary:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Botón redirect */
+.sign-btn-redirect {
+  display: inline-block;
+  margin-top: 1rem;
+  padding: 0.65rem 1.5rem;
+  background: #ebf8ff;
+  color: #2b6cb0;
+  border: 1px solid #bee3f8;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.2s;
+}
+
+.sign-btn-redirect:hover {
+  background: #3182ce;
+  color: #ffffff;
+}
+
+/* Tarjeta de estado genérica */
+.sign-step-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+  border-radius: 14px;
+  padding: 3rem 2rem;
+  text-align: center;
+}
+
+.sign-status-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #1a365d;
+  margin-bottom: 0.5rem;
+}
+
+.sign-status-text {
+  font-size: 0.85rem;
+  color: #4a5568;
+}
+
+.sign-status-progress {
+  font-size: 0.8rem;
+  color: #2b6cb0;
+  margin-top: 0.5rem;
+  font-style: italic;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Spinner */
+.sign-spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid #e2e8f0;
+  border-top-color: #3182ce;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin: 0 auto 1.25rem;
+}
+
+.sign-spinner-large {
+  width: 56px;
+  height: 56px;
+  border: 4px solid #e2e8f0;
+  border-top-color: #3182ce;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  margin: 0 auto 1.5rem;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Signing card */
+.sign-signing-card {
+  padding: 3.5rem 2rem;
+}
+
+.sign-crypto-notice {
+  margin-top: 1.25rem;
+  padding: 0.6rem 1rem;
+  background: #f0fff4;
+  border-radius: 6px;
+  font-size: 0.72rem;
+  color: #276749;
+}
+
+/* Success card */
+.sign-success-card {
+  border-color: #c6f6d5;
+  box-shadow: 0 10px 15px -3px rgba(72, 187, 120, 0.1);
+}
+.sign-success-icon-container {
+  color: #38a169;
+  margin-bottom: 1rem;
+}
+
+/* Error card */
+.sign-error-card {
+  border-color: #fed7d7;
+  box-shadow: 0 10px 15px -3px rgba(245, 101, 101, 0.1);
+}
+.sign-error-icon-container {
+  color: #e53e3e;
+  margin-bottom: 1rem;
+}
+.sign-error-detail {
+  font-size: 0.8rem;
+  color: #e53e3e;
+  margin-top: 0.5rem;
+}
+
+/* Footer */
+.sign-page-footer {
+  text-align: center;
+  margin-top: 1.5rem;
+  font-size: 0.72rem;
+  color: #718096;
+}
+
+/* ==========================================
+   PANEL DE WEBHOOKS (Dashboard del Cliente)
+   ========================================== */
+
+.webhook-panel { animation: fadeSlideIn 0.3s ease; }
+
+.webhook-panel .card + .card {
+  margin-top: 1.5rem;
+}
+
+/* Formulario de prueba de webhooks */
+.webhook-test-result {
+  margin-top: 1rem;
+  padding: 0.75rem 1rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+}
+
+.webhook-test-ok {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  color: #166534;
+}
+
+.webhook-test-fail {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+}
+
+/* Lista de solicitudes de firma */
+.sig-request-row {
+  border-bottom: 1px solid #f0f0f0;
+  padding: 0.85rem 0;
+}
+
+.sig-request-row:last-child {
+  border-bottom: none;
+}
+
+.sig-request-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.sig-request-name {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.sig-request-hash {
+  font-size: 0.7rem;
+  color: #aaa;
+  font-family: 'SF Mono', monospace;
+}
+
+.sig-request-meta {
+  font-size: 0.72rem;
+  color: #888;
+  margin-top: 0.3rem;
+}
+
+/* Webhook jobs inline */
+.webhook-jobs-list {
+  margin-top: 0.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.webhook-job-chip {
+  font-size: 0.65rem;
+  font-weight: 600;
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.webhook-job-chip.pending {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.webhook-job-chip.success {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.webhook-job-chip.failed {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+/* Link de firma */
+.sign-url-box {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  padding: 0.5rem 0.75rem;
+  margin-top: 0.4rem;
+}
+
+.sign-url-link {
+  flex: 1;
+  font-size: 0.72rem;
+  color: #3182ce;
+  font-family: monospace;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-decoration: none;
+}
+
+.sign-url-link:hover {
+  text-decoration: underline;
+}
+
+/* Badge de estado para solicitudes */
+.badge-pending  { background: #fff3cd; color: #856404; }
+.badge-signed   { background: #d1fae5; color: #065f46; }
+.badge-failed   { background: #fee2e2; color: #991b1b; }
+.badge-expired  { background: #f3f4f6; color: #6b7280; }

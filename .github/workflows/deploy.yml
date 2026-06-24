@@ -1,0 +1,92 @@
+name: Deploy to Production (GHCR + Dokploy)
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+
+      - name: Install root dependencies
+        run: npm ci
+
+      - name: Generate Prisma Client
+        run: npx prisma generate
+
+      - name: Build Backend (Validation)
+        run: npm run build
+
+      - name: Install frontend dependencies
+        run: |
+          cd frontend
+          npm ci
+
+      - name: Build Frontend (Validation)
+        run: |
+          cd frontend
+          npm run build
+
+      - name: Convert repository owner to lowercase
+        run: |
+          echo "OWNER_LC=${OWNER,,}" >> ${GITHUB_ENV}
+        env:
+          OWNER: "${{ github.repository_owner }}"
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # 1. Construcción y subida de la imagen del Backend (API)
+      - name: Build and push Backend Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: ghcr.io/${{ env.OWNER_LC }}/opensigner-backend:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # 2. Construcción y subida de la imagen del Frontend (Web)
+      - name: Build and push Frontend Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          file: ./frontend/Dockerfile
+          push: true
+          build-args: |
+            VITE_API_URL=${{ secrets.VITE_API_URL }}
+          tags: ghcr.io/${{ env.OWNER_LC }}/opensigner-frontend:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # Dispara el redespliegue de Dokploy mediante webhook
+      - name: Trigger Dokploy Deployment Webhook
+        run: |
+          if [ -n "${{ secrets.DOKPLOY_WEBHOOK_URL }}" ]; then
+            echo "Disparando despliegue automático en Dokploy..."
+            curl -X POST "${{ secrets.DOKPLOY_WEBHOOK_URL }}"
+          else
+            echo "DOKPLOY_WEBHOOK_URL no configurado. Saltando trigger."
+          fi

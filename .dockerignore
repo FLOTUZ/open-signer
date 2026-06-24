@@ -1,0 +1,31 @@
+# Ignorar dependencias locales
+node_modules
+npm-debug.log
+yarn-error.log
+
+# Ignorar builds y temporales del host
+dist
+build
+.tscache
+uploads
+*.zip
+*.tar.gz
+
+# Ignorar configuración local
+.env
+.env*.local
+
+# Ignorar control de versiones y CI
+.git
+.github
+.gitignore
+.dockerignore
+README.md
+API_USAGE.md
+walkthrough.md
+task.md
+implementation_plan.md
+
+# Ignorar la carpeta del frontend en el backend build
+frontend/node_modules
+frontend/dist

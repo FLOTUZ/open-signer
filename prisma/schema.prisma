@@ -1,0 +1,177 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+}
+
+enum Role {
+  SUPER_ADMIN
+  CLIENT
+}
+
+enum ApiKeyStatus {
+  ACTIVE
+  REVOCED
+}
+
+enum HttpMethod {
+  GET
+  POST
+  PUT
+  DELETE
+}
+
+model User {
+  id                 String           @id @default(uuid())
+  name               String?          @map("name")
+  email              String           @unique
+  passwordHash       String           @map("password_hash")
+  role               Role             @default(CLIENT)
+  mustChangePassword Boolean          @default(false) @map("must_change_password")
+  createdAt          DateTime         @default(now()) @map("created_at")
+  apiKeys            ApiKey[]
+  documents          SignedDocument[]
+  signatureRequests  SignatureRequest[]
+
+  @@map("users")
+}
+
+model ApiKey {
+  id        String       @id @default(uuid())
+  hash      String       @unique
+  clientId  String       @map("client_id")
+  status    ApiKeyStatus @default(ACTIVE)
+  createdAt DateTime     @default(now()) @map("created_at")
+  client    User         @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  
+  name      String?      @map("name")
+  logoUrl   String?      @map("logo_url")
+
+  @@map("api_keys")
+}
+
+model SignedDocument {
+  id              String   @id @default(uuid())
+  clientId        String   @map("client_id")
+  s3Url           String   @map("s3_url")
+  stampedS3Url    String?  @map("stamped_s3_url")
+  documentHash    String   @map("document_hash")
+  signatureString String   @map("signature_string") @db.Text
+  signerName      String?  @map("signer_name")
+  signerRfc       String?  @map("signer_rfc")
+  cadenaOriginal  String?  @map("cadena_original") @db.Text
+  createdAt       DateTime @default(now()) @map("created_at")
+  client          User     @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@map("signed_documents")
+}
+
+model AuditLog {
+  id          String     @id @default(uuid())
+  method      HttpMethod
+  endpoint    String
+  originIp    String     @map("origin_ip")
+  role        Role?
+  username    String?
+  description String     @db.Text
+  timestamp   DateTime   @default(now())
+
+  @@map("audit_logs")
+}
+
+enum SignatureRequestStatus {
+  PENDING
+  SIGNED
+  FAILED
+  EXPIRED
+}
+
+enum WebhookJobStatus {
+  PENDING
+  SUCCESS
+  FAILED
+}
+
+// ── Solicitudes de Firma (flujo Client-Side Crypto vía Webhook) ─────────────
+model SignatureRequest {
+  id              String                 @id @default(uuid())
+  // Hash SHA-256 del documento original — nunca el documento en sí
+  documentHash    String                 @map("document_hash")
+  documentName    String                 @map("document_name")
+  documentSize    Int                    @map("document_size")
+  // URL donde vive el documento almacenado (S3 / local)
+  documentUrl     String                 @map("document_url")
+  status          SignatureRequestStatus @default(PENDING)
+  // A dónde redirigir al usuario tras firmar (opcional)
+  redirectUrl     String?                @map("redirect_url")
+  // A dónde avisar al integrador (servidor a servidor)
+  webhookUrl      String                 @map("webhook_url")
+  // Resultado de la firma (Base64 RSA-SHA256)
+  signatureData   String?                @map("signature_data") @db.Text
+  // Sello NOM-151 del PSC (si está configurado)
+  nom151Stamp     String?                @map("nom151_stamp") @db.Text
+  // Datos del firmante (extraídos del .cer al completar)
+  signerName      String?                @map("signer_name")
+  signerRfc       String?                @map("signer_rfc")
+  cerSerialNumber String?                @map("cer_serial_number")
+  // Propietario de la solicitud (el cliente API)
+  clientId        String                 @map("client_id")
+  client          User                   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  createdAt       DateTime               @default(now()) @map("created_at")
+  // TTL de 24 horas para completar la firma
+  expiresAt       DateTime               @map("expires_at")
+  // Cola de webhooks asociada
+  webhookJobs     WebhookJob[]
+
+  // Configuración de branding copiada de la API Key en la creación
+  clientName      String?                @map("client_name")
+  logoUrl         String?                @map("logo_url")
+
+  @@map("signature_requests")
+}
+
+// ── Cola de Webhooks con Reintentos (Backoff Exponencial) ───────────────────
+model WebhookJob {
+  id                 String           @id @default(uuid())
+  signatureRequestId String           @map("signature_request_id")
+  signatureRequest   SignatureRequest  @relation(fields: [signatureRequestId], references: [id], onDelete: Cascade)
+  url                String
+  // Payload JSON serializado que se enviará al integrador
+  payload            String           @db.Text
+  status             WebhookJobStatus @default(PENDING)
+  // Control de reintentos
+  attempts           Int              @default(0)
+  lastAttemptAt      DateTime?        @map("last_attempt_at")
+  // Cuándo realizar el próximo intento (null = inmediato)
+  nextRetryAt        DateTime?        @map("next_retry_at")
+  // Respuesta HTTP del último intento (para auditoría)
+  lastResponseCode   Int?             @map("last_response_code")
+  lastResponseBody   String?          @map("last_response_body") @db.Text
+  createdAt          DateTime         @default(now()) @map("created_at")
+
+  @@map("webhook_jobs")
+}
+
+// ── Caché Local de Listas de Revocación (CRL) ──────────────────────────────
+model RevokedCertificate {
+  serialNumber   String   @id @map("serial_number")
+  revocationDate DateTime @map("revocation_date")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  @@map("revoked_certificates")
+}
+
+model CrlSyncLog {
+  id           String   @id @default(uuid())
+  syncDate     DateTime @default(now()) @map("sync_date")
+  status       String   // "SUCCESS" | "FAILED"
+  recordsCount Int      @default(0) @map("records_count")
+  error        String?  @db.Text
+
+  @@map("crl_sync_logs")
+}
