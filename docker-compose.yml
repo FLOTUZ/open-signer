@@ -1,7 +1,28 @@
 services:
+  init-certs:
+    image: node:20-alpine
+    container_name: opensigner_init_certs
+    env_file:
+      - .env
+    volumes:
+      - ./scripts:/app/scripts:ro
+      - ${SAT_CERTS_HOST_DIR:-./certs/sat}:/app/certs/sat
+      - ${SAT_CERTS_TEST_HOST_DIR:-./certs/sat-test}:/app/certs/sat-test
+      - ./certs:/app/certs_hash
+    environment:
+      - SAT_CERTS_HOST_DIR=/app/certs/sat
+      - SAT_CERTS_TEST_HOST_DIR=/app/certs/sat-test
+      - SAT_CERTS_HASH_FILE=/app/certs_hash/sat-certs.sha256
+      - SAT_CERTS_TEST_HASH_FILE=/app/certs_hash/sat-certs-test.sha256
+    command: >
+      sh -c "apk add --no-cache bash curl unzip coreutils && bash /app/scripts/install-sat-certs.sh -y"
+
   backend:
     build: .
     container_name: opensigner_backend
+    depends_on:
+      init-certs:
+        condition: service_completed_successfully
     env_file:
       - .env
     environment:

@@ -54,13 +54,15 @@ TEST_HASH_FILE="${SAT_CERTS_TEST_HASH_FILE:-$PROJECT_ROOT/certs/sat-certs-test.s
 
 INSTALL_PROD=true
 INSTALL_TEST=true
+AUTO_CONFIRM=false
 
 for arg in "$@"; do
   case "$arg" in
     --prod-only) INSTALL_TEST=false ;;
     --test-only) INSTALL_PROD=false ;;
+    -y|--yes) AUTO_CONFIRM=true ;;
     *)
-      echo "❌ Argumento no reconocido: $arg (usa --prod-only o --test-only)" >&2
+      echo "❌ Argumento no reconocido: $arg (usa --prod-only, --test-only o -y)" >&2
       exit 1
       ;;
   esac
@@ -114,10 +116,14 @@ download_and_verify() {
     echo "    (recomendado, ya que el SAT sirve este archivo por http:// sin TLS),"
     echo "    revisa ahora el contenido del ZIP descargado en:"
     echo "      $zip_dest"
-    read -rp "    ¿Confías en este archivo y deseas continuar? (s/N): " confirm
-    if [[ ! "$confirm" =~ ^[sS]$ ]]; then
-      echo "❌ [$label] Instalación cancelada por el usuario."
-      exit 1
+    if [[ "$AUTO_CONFIRM" == true ]]; then
+      echo "    Autoconfirmado (--yes / -y)."
+    else
+      read -rp "    ¿Confías en este archivo y deseas continuar? (s/N): " confirm
+      if [[ ! "$confirm" =~ ^[sS]$ ]]; then
+        echo "❌ [$label] Instalación cancelada por el usuario."
+        exit 1
+      fi
     fi
     mkdir -p "$(dirname "$hash_file")"
     echo "$actual_sha256" > "$hash_file"

@@ -374,6 +374,10 @@ Dado que las imágenes se construyen y suben a GHCR de forma externa, en Dokploy
    - **Mount Path**: `/app/certs/sat`
    *(Sin este volumen, el contenedor fallará al arrancar por seguridad).*
 6. Asigna tu dominio (ej. `api.tudominio.com`) al puerto expuesto por el contenedor (`5000`).
+7. Entrar vía SSH al host y ejecutar:
+```bash
+sudo mkdir -p /etc/sat-certs
+```
 
 #### 2. Registrar el Frontend (Nginx SPA) en Dokploy
 1. Crea otra aplicación de tipo **Application** en Dokploy.
