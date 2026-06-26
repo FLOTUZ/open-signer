@@ -203,6 +203,24 @@ Esto levantará:
 *   **Backend:** Disponible en `http://localhost:5000` (conectado a tu base de datos externa).
 *   **Frontend (React Nginx):** Disponible en `http://localhost:5001`.
 
+### 3.4 Ejecutar usando GitHub Container Registry (GHCR)
+
+Si prefieres no compilar las imágenes localmente (y por lo tanto no necesitas el código fuente ni Node.js), puedes descargar y ejecutar directamente las imágenes públicas pre-compiladas desde el Container Registry. 
+
+```bash
+# Backend
+docker run -d --name opensigner-backend -p 5000:5000 \
+  --env-file .env \
+  -v /etc/sat-certs:/app/certs/sat \
+  ghcr.io/flotuz/opensigner-backend:latest
+
+# Frontend
+docker run -d --name opensigner-frontend -p 5001:80 \
+  ghcr.io/flotuz/opensigner-frontend:latest
+```
+
+*(Asegúrate de haber configurado tu archivo `.env` y el directorio de certificados en el host como se menciona en los pasos anteriores).*
+
 ---
 
 ## 4. Cuenta Inicial (Auto-Seeding)
