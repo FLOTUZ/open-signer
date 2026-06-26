@@ -46,5 +46,5 @@ RUN mkdir -p uploads
 
 EXPOSE 5000
 
-# Se elimina db push. Las migraciones deben hacerse en un pipeline CI/CD o con un script aparte usando 'prisma migrate deploy'
-CMD ["node", "dist/server.js"]
+# Ejecutar migraciones pendientes automáticamente antes de iniciar el servidor
+CMD ["sh", "-c", "npx prisma migrate deploy && node dist/server.js"]
