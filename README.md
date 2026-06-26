@@ -203,6 +203,24 @@ Esto levantará:
 *   **Backend:** Disponible en `http://localhost:5000` (conectado a tu base de datos externa).
 *   **Frontend (React Nginx):** Disponible en `http://localhost:5001`.
 
+### 3.4 Ejecutar usando GitHub Container Registry (GHCR)
+
+Si prefieres no compilar las imágenes localmente (y por lo tanto no necesitas el código fuente ni Node.js), puedes descargar y ejecutar directamente las imágenes públicas pre-compiladas desde el Container Registry. 
+
+```bash
+# Backend
+docker run -d --name opensigner-backend -p 5000:5000 \
+  --env-file .env \
+  -v /etc/sat-certs:/app/certs/sat \
+  ghcr.io/flotuz/opensigner-backend:latest
+
+# Frontend
+docker run -d --name opensigner-frontend -p 5001:80 \
+  ghcr.io/flotuz/opensigner-frontend:latest
+```
+
+*(Asegúrate de haber configurado tu archivo `.env` y el directorio de certificados en el host como se menciona en los pasos anteriores).*
+
 ---
 
 ## 4. Cuenta Inicial (Auto-Seeding)
@@ -349,9 +367,13 @@ Dado que las imágenes se construyen y suben a GHCR de forma externa, en Dokploy
 2. En la sección de configuración de origen, selecciona **Docker Registry** (en lugar de GitHub/Git).
 3. Configura:
    - **Registry**: GitHub Container Registry (`ghcr.io`).
-   - **Image**: `ghcr.io/TU_USUARIO_DE_GITHUB/opensigner-backend:latest`
-4. En la pestaña **Environment**, define las variables necesarias (`DATABASE_URL`, `JWT_SECRET`, `PORT=3000`, `DOMAIN=api.tudominio.com`, etc.).
-5. Asigna tu dominio (ej. `api.tudominio.com`) al puerto expuesto por el contenedor (`3000`).
+   - **Image**: `ghcr.io/flotuz/opensigner-backend:latest` (o tu usuario si hiciste un fork).
+4. En la pestaña **Environment**, define las variables necesarias (`DATABASE_URL`, `JWT_SECRET`, `PORT=5000`, etc.).
+5. En la pestaña **Advanced**, en la sección de Volúmenes (Bind Mounts), agrega la ruta de los certificados:
+   - **Host Path**: `/etc/sat-certs`
+   - **Mount Path**: `/app/certs/sat`
+   *(Sin este volumen, el contenedor fallará al arrancar por seguridad).*
+6. Asigna tu dominio (ej. `api.tudominio.com`) al puerto expuesto por el contenedor (`5000`).
 
 #### 2. Registrar el Frontend (Nginx SPA) en Dokploy
 1. Crea otra aplicación de tipo **Application** en Dokploy.

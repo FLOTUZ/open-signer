@@ -22,6 +22,9 @@ RUN npm run build
 # --- Etapa 2: Servidor Nginx ---
 FROM nginx:alpine
 
+# Etiqueta para vincular la imagen al repositorio en GitHub Container Registry
+LABEL org.opencontainers.image.source="https://github.com/FLOTUZ/open-signer"
+
 # Copiar compilación de la etapa anterior al directorio raíz de Nginx
 COPY --from=build /usr/src/app/dist /usr/share/nginx/html
 

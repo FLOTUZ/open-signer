@@ -20,6 +20,9 @@ RUN npm run build
 # ─── FASE 2: RUNNER (PRODUCCIÓN REAL) ──────────────────────────────
 FROM node:20-alpine AS runner
 
+# Etiqueta para vincular la imagen al repositorio en GitHub Container Registry
+LABEL org.opencontainers.image.source="https://github.com/FLOTUZ/open-signer"
+
 # Dependencias del sistema requeridas por Prisma
 RUN apk add --no-cache openssl libc6-compat
 
