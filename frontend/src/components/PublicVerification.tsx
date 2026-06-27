@@ -15,7 +15,7 @@ export default function PublicVerificationPage({ docId: propDocId }: { docId?: s
       setLoading(false);
       return;
     }
-    fetch(`${API}/signatures/verify/${docId}`)
+    fetch(`${API}/signatures/verify/${docId.trim()}`)
       .then(async (r) => {
         const json = await r.json();
         if (r.ok && json.status === "success") {

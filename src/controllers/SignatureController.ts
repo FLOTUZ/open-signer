@@ -17,7 +17,10 @@ export class SignatureController {
     next: NextFunction
   ): Promise<void> {
     try {
-      const { documentId } = req.params;
+      let documentId = req.params.documentId;
+      if (documentId) {
+        documentId = documentId.trim();
+      }
 
       let docData: {
         id: string;
