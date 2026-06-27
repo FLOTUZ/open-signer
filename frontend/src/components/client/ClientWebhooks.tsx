@@ -238,7 +238,7 @@ export default function ClientWebhooks() {
         setTestResult({
           ok: true,
           message: `✅ Solicitud creada. Comparte el link de firma con el usuario.`,
-          signUrl: data.data.signUrl,
+          signUrl: `${FRONTEND_BASE}/firmar/${data.data.id}`,
         });
         await loadRequests();
       } else {

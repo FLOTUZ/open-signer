@@ -9,12 +9,15 @@ import { env } from '../config/env';
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
-/**
- * Obtiene la URL pública del frontend de firma desde variables de entorno.
- * Fallback: construida a partir del dominio del backend + puerto 5001 (Nginx frontend).
- */
 function getFrontendSignUrl(id: string): string {
-  const base = process.env.FRONTEND_URL || `http://${env.DOMAIN}:5001`;
+  let base = process.env.FRONTEND_URL;
+  if (!base) {
+    if (env.NODE_ENV === 'production') {
+      base = `https://${env.DOMAIN}`;
+    } else {
+      base = `http://${env.DOMAIN}:5001`;
+    }
+  }
   return `${base}/firmar/${id}`;
 }
 
