@@ -374,10 +374,13 @@ Dado que las imágenes se construyen y suben a GHCR de forma externa, en Dokploy
    - **Mount Path**: `/app/certs/sat`
    *(Sin este volumen, el contenedor fallará al arrancar por seguridad).*
 6. Asigna tu dominio (ej. `api.tudominio.com`) al puerto expuesto por el contenedor (`5000`).
-7. Entrar vía SSH al host y ejecutar:
+7. Entrar vía SSH a tu servidor (VPS) e instalar manualmente los certificados descargando el script:
 ```bash
-sudo mkdir -p /etc/sat-certs
+wget https://raw.githubusercontent.com/FLOTUZ/open-signer/master/scripts/install-sat-certs.sh -O install-sat-certs.sh
+chmod +x install-sat-certs.sh
+sudo ./install-sat-certs.sh -y
 ```
+*(Este script descargará, verificará e instalará los certificados en `/etc/sat-certs` automáticamente, preparándolos para que el contenedor los copie al iniciar).*
 
 #### 2. Registrar el Frontend (Nginx SPA) en Dokploy
 1. Crea otra aplicación de tipo **Application** en Dokploy.

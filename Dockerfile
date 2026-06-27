@@ -46,5 +46,5 @@ RUN mkdir -p uploads
 
 EXPOSE 5000
 
-# Ejecutar migraciones pendientes automáticamente antes de iniciar el servidor
-CMD ["sh", "-c", "npx prisma migrate deploy && node dist/server.js"]
+# Ejecutar migraciones pendientes automáticamente y copiar certificados (failsafe)
+CMD ["sh", "-c", "mkdir -p /app/certs/sat && cp -r /etc/sat-certs/* /app/certs/sat/ 2>/dev/null || true && npx prisma migrate deploy && node dist/server.js"]

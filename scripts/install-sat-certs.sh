@@ -42,15 +42,22 @@ set -euo pipefail
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 TMP_DIR="$(mktemp -d)"
 
-# ─── Paquete de PRODUCCIÓN: cadena de confianza (raíz + intermedias) ───
 PROD_ZIP_URL="http://omawww.sat.gob.mx/tramitesyservicios/Paginas/documentos/Cert_Prod.zip"
-PROD_CERTS_DIR="${SAT_CERTS_HOST_DIR:-$PROJECT_ROOT/certs/sat}"
-PROD_HASH_FILE="${SAT_CERTS_HASH_FILE:-$PROJECT_ROOT/certs/sat-certs.sha256}"
-
-# ─── Paquete de PRUEBAS: CSD de prueba (.cer + .key cifrada + contraseña) ───
 TEST_ZIP_URL="http://omawww.sat.gob.mx/tramitesyservicios/Paginas/documentos/Certificados_P.zip"
-TEST_CERTS_DIR="${SAT_CERTS_TEST_HOST_DIR:-$PROJECT_ROOT/certs/sat-test}"
-TEST_HASH_FILE="${SAT_CERTS_TEST_HASH_FILE:-$PROJECT_ROOT/certs/sat-certs-test.sha256}"
+
+if [[ ! -f "$PROJECT_ROOT/package.json" ]]; then
+  # Ejecución standalone (ej. vía wget en producción)
+  PROD_CERTS_DIR="${SAT_CERTS_HOST_DIR:-/etc/sat-certs}"
+  PROD_HASH_FILE="${SAT_CERTS_HASH_FILE:-/etc/sat-certs/sat-certs.sha256}"
+  TEST_CERTS_DIR="${SAT_CERTS_TEST_HOST_DIR:-/etc/sat-certs-test}"
+  TEST_HASH_FILE="${SAT_CERTS_TEST_HASH_FILE:-/etc/sat-certs-test/sat-certs-test.sha256}"
+else
+  # Ejecución dentro del repositorio local
+  PROD_CERTS_DIR="${SAT_CERTS_HOST_DIR:-$PROJECT_ROOT/certs/sat}"
+  PROD_HASH_FILE="${SAT_CERTS_HASH_FILE:-$PROJECT_ROOT/certs/sat-certs.sha256}"
+  TEST_CERTS_DIR="${SAT_CERTS_TEST_HOST_DIR:-$PROJECT_ROOT/certs/sat-test}"
+  TEST_HASH_FILE="${SAT_CERTS_TEST_HASH_FILE:-$PROJECT_ROOT/certs/sat-certs-test.sha256}"
+fi
 
 INSTALL_PROD=true
 INSTALL_TEST=true
