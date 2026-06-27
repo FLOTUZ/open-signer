@@ -6,8 +6,18 @@ declare global {
   }
 }
 
-const envApiUrl = window?._env_?.VITE_API_URL || import.meta.env.VITE_API_URL;
-export const API = envApiUrl || "http://localhost:5000/api/v1";
+let envApiUrl = window?._env_?.VITE_API_URL || import.meta.env.VITE_API_URL;
+
+if (!envApiUrl || envApiUrl === "") {
+  envApiUrl = "http://localhost:5000/api/v1";
+}
+
+// Smart fallback: if the backend points to localhost but the frontend is loaded from a public IP/domain (like a mobile device or VPS), swap localhost for the real hostname.
+if (envApiUrl.includes("localhost") && window.location.hostname !== "localhost" && window.location.hostname !== "127.0.0.1") {
+  envApiUrl = envApiUrl.replace("localhost", window.location.hostname);
+}
+
+export const API = envApiUrl;
 export const BACKEND_BASE_URL = API.replace(/\/api\/v1\/?$/, "");
 
 export function api(path: string, token: string, opts: RequestInit = {}) {
