@@ -15,7 +15,7 @@ import {
   FiShield,
 } from "react-icons/fi";
 
-const API = import.meta.env.VITE_API_URL || "http://localhost:5000/api/v1";
+import { API } from "../api";
 
 // ── Tipos ─────────────────────────────────────────────────────────────────────
 
