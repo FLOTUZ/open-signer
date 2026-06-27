@@ -376,7 +376,7 @@ Dado que las imágenes se construyen y suben a GHCR de forma externa, en Dokploy
 6. Asigna tu dominio (ej. `api.tudominio.com`) al puerto expuesto por el contenedor (`5000`).
 7. Entrar vía SSH a tu servidor (VPS) e instalar manualmente los certificados descargando el script:
 ```bash
-mkdir -p /etc/sat-certs
+sudo apt-get update && sudo apt-get install -y unzip curl wget
 wget https://raw.githubusercontent.com/FLOTUZ/open-signer/master/scripts/install-sat-certs.sh -O install-sat-certs.sh
 chmod +x install-sat-certs.sh
 sudo ./install-sat-certs.sh -y

@@ -46,6 +46,14 @@ else
   PROJECT_ROOT="/tmp/standalone"
 fi
 
+for cmd in curl unzip sha256sum; do
+  if ! command -v "$cmd" >/dev/null 2>&1; then
+    echo "❌ Error: Este script requiere '$cmd' pero no está instalado." >&2
+    echo "   Por favor instálalo primero (ej. sudo apt-get install -y unzip curl) y vuelve a intentar." >&2
+    exit 1
+  fi
+done
+
 TMP_DIR="$(mktemp -d)"
 
 PROD_ZIP_URL="http://omawww.sat.gob.mx/tramitesyservicios/Paginas/documentos/Cert_Prod.zip"
