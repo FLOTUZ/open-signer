@@ -37,9 +37,15 @@
 # sin que tú lo esperaras, trátalo como una alerta seria y no la ignores.
 # ─────────────────────────────────────────────────────────────────────────────
 
-set -euo pipefail
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [[ -f "$SCRIPT_DIR/package.json" ]]; then
+  PROJECT_ROOT="$SCRIPT_DIR"
+elif [[ -f "$SCRIPT_DIR/../package.json" ]]; then
+  PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+else
+  PROJECT_ROOT="/tmp/standalone"
+fi
 
-PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 TMP_DIR="$(mktemp -d)"
 
 PROD_ZIP_URL="http://omawww.sat.gob.mx/tramitesyservicios/Paginas/documentos/Cert_Prod.zip"
@@ -327,9 +333,7 @@ if [[ "$INSTALL_TEST" == true ]]; then
       echo "✅ [PRUEBAS] Verificación criptográfica exitosa: la cadena de pruebas es consistente."
     else
       echo "⚠️  [PRUEBAS] La verificación criptográfica automática NO pasó."
-      echo "    Esto no detiene la instalación (los certificados ya quedaron copiados),"
-      echo "    pero antes de confiar en este entorno de pruebas, revisa manualmente"
-      echo "    con diagnostico2.ts cuál CA debería emitir este CSD."
+      echo "    Esto no detiene la instalación (los certificados ya quedaron copiados)."
     fi
   elif [[ -z "${TEST_CSD_CER_INSTALLED:-}" ]]; then
     echo "⚠️  [PRUEBAS] No se identificó un .cer de CSD para verificar (revisa el contenido del ZIP)."
