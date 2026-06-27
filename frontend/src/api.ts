@@ -12,9 +12,11 @@ if (!envApiUrl || envApiUrl === "") {
   envApiUrl = "http://localhost:5000/api/v1";
 }
 
-// Smart fallback: if the backend points to localhost but the frontend is loaded from a public IP/domain (like a mobile device or VPS), swap localhost for the real hostname.
+// Smart fallback: if the backend points to localhost but the frontend is loaded from a public IP/domain,
+// we use a relative path. This forces the request through the frontend's Nginx reverse proxy,
+// preventing CORS and Mixed Content (HTTP vs HTTPS) errors on mobile devices.
 if (envApiUrl.includes("localhost") && window.location.hostname !== "localhost" && window.location.hostname !== "127.0.0.1") {
-  envApiUrl = envApiUrl.replace("localhost", window.location.hostname);
+  envApiUrl = "/api/v1";
 }
 
 export const API = envApiUrl;
