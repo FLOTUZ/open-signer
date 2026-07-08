@@ -56,10 +56,11 @@ function bootstrapCryptoRoots() {
 bootstrapCryptoRoots();
 
 const server = app.listen(env.PORT, () => {
-  console.log(`🚀 Servidor ejecutándose en http://${env.DOMAIN}:${env.PORT}`);
-  console.log(
-    `📄 Documentación API disponible en http://${env.DOMAIN}:${env.PORT}/docs`,
-  );
+  const portSuffix = env.NODE_ENV === "production" ? "" : `:${env.PORT}`;
+  const baseUrl = `http://${env.DOMAIN}${portSuffix}`;
+
+  console.log(`🚀 Servidor ejecutándose en ${baseUrl}`);
+  console.log(`📄 Documentación API disponible en ${baseUrl}/docs`);
   // Iniciar el worker de webhooks integrado en el proceso principal
   startWebhookWorker();
   

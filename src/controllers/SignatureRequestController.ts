@@ -1,21 +1,21 @@
-import { Request, Response, NextFunction } from 'express';
-import crypto from 'crypto';
-import { prisma } from '../config/db';
-import { AppError } from '../core/errors/AppError';
-import { SatSignatureService } from '../services/SatSignatureService';
-import { S3StorageService } from '../services/S3StorageService';
-import { WebhookDispatcherService } from '../services/WebhookDispatcherService';
-import { env } from '../config/env';
+import { Request, Response, NextFunction } from "express";
+import crypto from "crypto";
+import { prisma } from "../config/db";
+import { AppError } from "../core/errors/AppError";
+import { SatSignatureService } from "../services/SatSignatureService";
+import { S3StorageService } from "../services/S3StorageService";
+import { WebhookDispatcherService } from "../services/WebhookDispatcherService";
+import { env } from "../config/env";
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
 function getFrontendSignUrl(id: string): string {
   let base = process.env.FRONTEND_URL;
   if (!base) {
-    if (env.NODE_ENV === 'production') {
+    if (env.NODE_ENV === "production") {
       base = `https://${env.DOMAIN}`;
     } else {
-      base = `http://${env.DOMAIN}:5001`;
+      base = `http://${env.DOMAIN}`;
     }
   }
   return `${base}/firmar/${id}`;
@@ -42,17 +42,17 @@ async function requestNom151Stamp(
 
   try {
     const response = await fetch(pscUrl, {
-      method:  'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify({ documentHash, signatureBase64 }),
-      signal:  AbortSignal.timeout(30_000),
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ documentHash, signatureBase64 }),
+      signal: AbortSignal.timeout(30_000),
     });
 
     if (!response.ok) {
       throw new Error(`PSC respondió con HTTP ${response.status}`);
     }
 
-    const data = await response.json() as { stamp?: string };
+    const data = (await response.json()) as { stamp?: string };
     return data.stamp ?? null;
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error);
@@ -77,11 +77,18 @@ export class SignatureRequestController {
     res: Response,
     next: NextFunction,
   ): Promise<void> {
-    const files = req.files as { [fieldname: string]: Express.Multer.File[] } | undefined;
+    const files = req.files as
+      | { [fieldname: string]: Express.Multer.File[] }
+      | undefined;
     const docFile = files?.documento?.[0];
 
     if (!docFile) {
-      return next(new AppError('El archivo del documento es obligatorio (campo: documento).', 400));
+      return next(
+        new AppError(
+          "El archivo del documento es obligatorio (campo: documento).",
+          400,
+        ),
+      );
     }
 
     const { redirectUrl, webhookUrl } = req.body as {
@@ -92,9 +99,9 @@ export class SignatureRequestController {
     try {
       // 1. Calcular hash SHA-256 del documento
       const documentHash = crypto
-        .createHash('sha256')
+        .createHash("sha256")
         .update(docFile.buffer)
-        .digest('hex');
+        .digest("hex");
 
       // 2. Almacenar el documento en S3 / local
       const documentUrl = await S3StorageService.uploadDocument(
@@ -117,7 +124,7 @@ export class SignatureRequestController {
           documentUrl,
           redirectUrl: redirectUrl || null,
           webhookUrl,
-          clientId:  req.user!.id,
+          clientId: req.user!.id,
           expiresAt,
           clientName,
           logoUrl,
@@ -128,14 +135,14 @@ export class SignatureRequestController {
       const signUrl = getFrontendSignUrl(signatureRequest.id);
 
       res.status(201).json({
-        status:  'success',
-        message: 'Solicitud de firma creada correctamente.',
+        status: "success",
+        message: "Solicitud de firma creada correctamente.",
         data: {
-          id:          signatureRequest.id,
+          id: signatureRequest.id,
           signUrl,
           documentHash,
           documentName: docFile.originalname,
-          expiresAt:    expiresAt.toISOString(),
+          expiresAt: expiresAt.toISOString(),
         },
       });
     } catch (error) {
@@ -163,31 +170,37 @@ export class SignatureRequestController {
       const signatureRequest = await prisma.signatureRequest.findUnique({
         where: { id },
         select: {
-          id:           true,
+          id: true,
           documentHash: true,
           documentName: true,
           documentSize: true,
-          status:       true,
-          expiresAt:    true,
-          createdAt:    true,
-          clientName:   true,
-          logoUrl:      true,
+          status: true,
+          expiresAt: true,
+          createdAt: true,
+          clientName: true,
+          logoUrl: true,
         },
       });
 
       if (!signatureRequest) {
-        throw new AppError('La solicitud de firma no existe o el ID es inválido.', 404);
+        throw new AppError(
+          "La solicitud de firma no existe o el ID es inválido.",
+          404,
+        );
       }
 
       // Verificar si ya expiró
-      if (signatureRequest.status === 'EXPIRED' || new Date() > signatureRequest.expiresAt) {
+      if (
+        signatureRequest.status === "EXPIRED" ||
+        new Date() > signatureRequest.expiresAt
+      ) {
         throw new AppError(
-          'Esta sesión de firma ha expirado (TTL: 24 horas). Solicita un nuevo enlace al emisor.',
+          "Esta sesión de firma ha expirado (TTL: 24 horas). Solicita un nuevo enlace al emisor.",
           410,
         );
       }
 
-      if (signatureRequest.status !== 'PENDING') {
+      if (signatureRequest.status !== "PENDING") {
         throw new AppError(
           `Esta solicitud de firma ya fue procesada (estado: ${signatureRequest.status}).`,
           409,
@@ -198,16 +211,22 @@ export class SignatureRequestController {
       let resolvedLogoUrl: string | null = null;
       if (signatureRequest.logoUrl) {
         try {
-          const presigned = await S3StorageService.getPresignedUrl(signatureRequest.logoUrl, 3600);
+          const presigned = await S3StorageService.getPresignedUrl(
+            signatureRequest.logoUrl,
+            3600,
+          );
           resolvedLogoUrl = presigned.url;
         } catch (err) {
-          console.error('Error generating presigned URL for request logo:', err);
+          console.error(
+            "Error generating presigned URL for request logo:",
+            err,
+          );
         }
       }
 
       res.status(200).json({
-        status: 'success',
-        data:   {
+        status: "success",
+        data: {
           ...signatureRequest,
           logoUrl: resolvedLogoUrl,
         },
@@ -237,9 +256,9 @@ export class SignatureRequestController {
     next: NextFunction,
   ): Promise<void> {
     const { id, signatureBase64, cerBase64 } = req.body as {
-      id:              string;
+      id: string;
       signatureBase64: string;
-      cerBase64:       string;
+      cerBase64: string;
     };
 
     let cerBuffer: Buffer | null = null;
@@ -251,10 +270,13 @@ export class SignatureRequestController {
       });
 
       if (!signatureRequest) {
-        throw new AppError('La solicitud de firma no existe o el ID es inválido.', 404);
+        throw new AppError(
+          "La solicitud de firma no existe o el ID es inválido.",
+          404,
+        );
       }
 
-      if (signatureRequest.status !== 'PENDING') {
+      if (signatureRequest.status !== "PENDING") {
         throw new AppError(
           `Esta solicitud ya fue procesada (estado: ${signatureRequest.status}).`,
           409,
@@ -265,26 +287,28 @@ export class SignatureRequestController {
         // Marcar como expirada en BD
         await prisma.signatureRequest.update({
           where: { id },
-          data:  { status: 'EXPIRED' },
+          data: { status: "EXPIRED" },
         });
         throw new AppError(
-          'La sesión de firma ha expirado (TTL: 24 horas). Solicita un nuevo enlace.',
+          "La sesión de firma ha expirado (TTL: 24 horas). Solicita un nuevo enlace.",
           410,
         );
       }
 
       // 2. Validar el certificado .cer contra la cadena de confianza del SAT
-      cerBuffer = Buffer.from(cerBase64, 'base64');
-      const certValidation = await SatSignatureService.validateCertificate(cerBuffer);
+      cerBuffer = Buffer.from(cerBase64, "base64");
+      const certValidation =
+        await SatSignatureService.validateCertificate(cerBuffer);
 
-      if (certValidation.resultado === 'RECHAZADO') {
+      if (certValidation.resultado === "RECHAZADO") {
         throw new AppError(
           `El certificado fue rechazado: [${certValidation.codigo_estado}] ${certValidation.detalles}`,
           400,
         );
       }
 
-      const { titular_nombre, titular_rfc, numero_serie } = certValidation.metadata;
+      const { titular_nombre, titular_rfc, numero_serie } =
+        certValidation.metadata;
 
       // 3. Solicitar sello NOM-151 al PSC (opcional — no bloquea si no está configurado)
       const nom151Stamp = await requestNom151Stamp(
@@ -296,11 +320,11 @@ export class SignatureRequestController {
       const updated = await prisma.signatureRequest.update({
         where: { id },
         data: {
-          status:          'SIGNED',
-          signatureData:   signatureBase64,
+          status: "SIGNED",
+          signatureData: signatureBase64,
           nom151Stamp,
-          signerName:      titular_nombre,
-          signerRfc:       titular_rfc,
+          signerName: titular_nombre,
+          signerRfc: titular_rfc,
           cerSerialNumber: numero_serie,
         },
       });
@@ -308,14 +332,14 @@ export class SignatureRequestController {
       // 4.5. Registrar el documento firmado en la tabla SignedDocument para que aparezca en el historial del cliente
       await prisma.signedDocument.create({
         data: {
-          id:              updated.id, // Reusamos el mismo ID de la solicitud para consistencia
-          clientId:        updated.clientId,
-          s3Url:           updated.documentUrl,
-          documentHash:    updated.documentHash,
+          id: updated.id, // Reusamos el mismo ID de la solicitud para consistencia
+          clientId: updated.clientId,
+          s3Url: updated.documentUrl,
+          documentHash: updated.documentHash,
           signatureString: updated.signatureData!,
-          signerName:      updated.signerName!,
-          signerRfc:       updated.signerRfc!,
-          cadenaOriginal:  updated.documentHash,
+          signerName: updated.signerName!,
+          signerRfc: updated.signerRfc!,
+          cadenaOriginal: updated.documentHash,
         },
       });
 
@@ -324,15 +348,15 @@ export class SignatureRequestController {
 
       // 6. Responder al frontend (que hará el redirect)
       res.status(200).json({
-        status:      'success',
-        message:     'Documento firmado exitosamente.',
+        status: "success",
+        message: "Documento firmado exitosamente.",
         redirectUrl: signatureRequest.redirectUrl,
         data: {
           signatureRequestId: id,
-          signerName:         titular_nombre,
-          signerRfc:          titular_rfc,
-          cerSerialNumber:    numero_serie,
-          nom151Obtained:     nom151Stamp !== null,
+          signerName: titular_nombre,
+          signerRfc: titular_rfc,
+          cerSerialNumber: numero_serie,
+          nom151Obtained: nom151Stamp !== null,
         },
       });
     } catch (error) {
@@ -357,29 +381,32 @@ export class SignatureRequestController {
     next: NextFunction,
   ): Promise<void> {
     try {
-      const page  = Math.max(1, parseInt(String(req.query.page  ?? '1')));
-      const limit = Math.min(100, Math.max(1, parseInt(String(req.query.limit ?? '20'))));
-      const skip  = (page - 1) * limit;
+      const page = Math.max(1, parseInt(String(req.query.page ?? "1")));
+      const limit = Math.min(
+        100,
+        Math.max(1, parseInt(String(req.query.limit ?? "20"))),
+      );
+      const skip = (page - 1) * limit;
 
       const [total, items] = await Promise.all([
         prisma.signatureRequest.count({ where: { clientId: req.user!.id } }),
         prisma.signatureRequest.findMany({
-          where:   { clientId: req.user!.id },
-          orderBy: { createdAt: 'desc' },
+          where: { clientId: req.user!.id },
+          orderBy: { createdAt: "desc" },
           skip,
-          take:    limit,
+          take: limit,
           include: {
             webhookJobs: {
               select: {
-                id:              true,
-                status:          true,
-                attempts:        true,
-                lastAttemptAt:   true,
-                nextRetryAt:     true,
+                id: true,
+                status: true,
+                attempts: true,
+                lastAttemptAt: true,
+                nextRetryAt: true,
                 lastResponseCode: true,
                 lastResponseBody: true,
               },
-              orderBy: { createdAt: 'desc' },
+              orderBy: { createdAt: "desc" },
               take: 5,
             },
           },
@@ -387,8 +414,8 @@ export class SignatureRequestController {
       ]);
 
       res.status(200).json({
-        status:     'success',
-        data:       items,
+        status: "success",
+        data: items,
         pagination: {
           total,
           page,
@@ -427,7 +454,10 @@ export class SignatureRequestController {
       });
 
       if (!job || job.signatureRequest.clientId !== req.user!.id) {
-        throw new AppError('El trabajo de webhook no existe o no pertenece a tu cuenta.', 404);
+        throw new AppError(
+          "El trabajo de webhook no existe o no pertenece a tu cuenta.",
+          404,
+        );
       }
 
       // Ejecutar despacho inmediato del webhook
@@ -437,21 +467,21 @@ export class SignatureRequestController {
       const updatedJob = await prisma.webhookJob.findUnique({
         where: { id: jobId },
         select: {
-          id:              true,
-          status:          true,
-          attempts:        true,
-          lastAttemptAt:   true,
-          nextRetryAt:     true,
+          id: true,
+          status: true,
+          attempts: true,
+          lastAttemptAt: true,
+          nextRetryAt: true,
           lastResponseCode: true,
           lastResponseBody: true,
         },
       });
 
       res.status(200).json({
-        status: 'success',
+        status: "success",
         message: success
-          ? 'El webhook se entregó correctamente.'
-          : 'El intento de webhook falló.',
+          ? "El webhook se entregó correctamente."
+          : "El intento de webhook falló.",
         data: updatedJob,
       });
     } catch (error) {
@@ -474,8 +504,11 @@ export class SignatureRequestController {
       const { id } = req.params;
       const { webhookUrl } = req.body as { webhookUrl: string };
 
-      if (!webhookUrl || !webhookUrl.startsWith('http')) {
-        throw new AppError('La URL del webhook debe ser una URL HTTP/HTTPS válida.', 400);
+      if (!webhookUrl || !webhookUrl.startsWith("http")) {
+        throw new AppError(
+          "La URL del webhook debe ser una URL HTTP/HTTPS válida.",
+          400,
+        );
       }
 
       const signatureRequest = await prisma.signatureRequest.findUnique({
@@ -483,7 +516,10 @@ export class SignatureRequestController {
       });
 
       if (!signatureRequest || signatureRequest.clientId !== req.user!.id) {
-        throw new AppError('La solicitud de firma no existe o no pertenece a tu cuenta.', 404);
+        throw new AppError(
+          "La solicitud de firma no existe o no pertenece a tu cuenta.",
+          404,
+        );
       }
 
       // 1. Actualizar URL en SignatureRequest
@@ -496,11 +532,11 @@ export class SignatureRequestController {
       await prisma.webhookJob.updateMany({
         where: {
           signatureRequestId: id,
-          status: 'FAILED',
+          status: "FAILED",
         },
         data: {
           url: webhookUrl,
-          status: 'PENDING',
+          status: "PENDING",
           attempts: 0,
           nextRetryAt: null,
           lastResponseCode: null,
@@ -509,8 +545,9 @@ export class SignatureRequestController {
       });
 
       res.status(200).json({
-        status: 'success',
-        message: 'La URL del webhook se ha actualizado y se han reiniciado los envíos fallidos.',
+        status: "success",
+        message:
+          "La URL del webhook se ha actualizado y se han reiniciado los envíos fallidos.",
         data: updatedRequest,
       });
     } catch (error) {
@@ -536,14 +573,19 @@ export class SignatureRequestController {
       });
 
       if (!request) {
-        throw new AppError('La solicitud de firma no existe.', 404);
+        throw new AppError("La solicitud de firma no existe.", 404);
       }
 
-      const presigned = await S3StorageService.getPresignedUrl(request.documentUrl, 300);
+      const presigned = await S3StorageService.getPresignedUrl(
+        request.documentUrl,
+        300,
+      );
 
       res.status(200).json({
-        status: 'success',
-        url: presigned.url.startsWith('http') ? presigned.url : `${process.env.API_URL ? process.env.API_URL.replace('/api/v1', '') : 'http://localhost:5000'}${presigned.url}`,
+        status: "success",
+        url: presigned.url.startsWith("http")
+          ? presigned.url
+          : `${process.env.API_URL ? process.env.API_URL.replace("/api/v1", "") : "http://localhost:5000"}${presigned.url}`,
       });
     } catch (error) {
       return next(error);
