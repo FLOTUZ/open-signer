@@ -1,20 +1,18 @@
-import { Request, Response, NextFunction } from 'express';
-import QRCode from 'qrcode';
-import { S3StorageService } from '../services/S3StorageService';
-import { prisma } from '../config/db';
-import { AppError } from '../core/errors/AppError';
-import { env } from '../config/env';
+import { Request, Response, NextFunction } from "express";
+import QRCode from "qrcode";
+import { S3StorageService } from "../services/S3StorageService";
+import { prisma } from "../config/db";
+import { AppError } from "../core/errors/AppError";
+import { env } from "../config/env";
 
 export class SignatureController {
-
-
   /**
    * Endpoint público para validar/verificar un documento firmado por su ID.
    */
   public static async verifyDocument(
     req: Request,
     res: Response,
-    next: NextFunction
+    next: NextFunction,
   ): Promise<void> {
     try {
       let documentId = req.params.documentId;
@@ -52,9 +50,10 @@ export class SignatureController {
           s3Url: signedDocument.s3Url,
           documentHash: signedDocument.documentHash,
           signatureString: signedDocument.signatureString,
-          signerName: signedDocument.signerName || 'Desconocido',
-          signerRfc: signedDocument.signerRfc || 'Desconocido',
-          cadenaOriginal: signedDocument.cadenaOriginal || signedDocument.documentHash,
+          signerName: signedDocument.signerName || "Desconocido",
+          signerRfc: signedDocument.signerRfc || "Desconocido",
+          cadenaOriginal:
+            signedDocument.cadenaOriginal || signedDocument.documentHash,
           clientEmail: signedDocument.client.email,
           createdAt: signedDocument.createdAt,
         };
@@ -63,7 +62,7 @@ export class SignatureController {
         const signatureRequest = await prisma.signatureRequest.findFirst({
           where: {
             id: documentId,
-            status: 'SIGNED',
+            status: "SIGNED",
           },
           include: {
             client: {
@@ -79,9 +78,9 @@ export class SignatureController {
             id: signatureRequest.id,
             s3Url: signatureRequest.documentUrl,
             documentHash: signatureRequest.documentHash,
-            signatureString: signatureRequest.signatureData || '',
-            signerName: signatureRequest.signerName || 'Desconocido',
-            signerRfc: signatureRequest.signerRfc || 'Desconocido',
+            signatureString: signatureRequest.signatureData || "",
+            signerName: signatureRequest.signerName || "Desconocido",
+            signerRfc: signatureRequest.signerRfc || "Desconocido",
             cadenaOriginal: signatureRequest.documentHash, // En flujo webhook se firma el hash directamente
             clientEmail: signatureRequest.client.email,
             createdAt: signatureRequest.createdAt,
@@ -90,18 +89,31 @@ export class SignatureController {
       }
 
       if (!docData) {
-        throw new AppError('El documento de firma digital no existe o el ID es inválido.', 404);
+        throw new AppError(
+          "El documento de firma digital no existe o el ID es inválido.",
+          404,
+        );
       }
 
       // Obtener el dominio del backend o usar localhost:5001 para el frontend de verificación
-      const baseDomain = process.env.FRONTEND_URL || `http://${env.DOMAIN || 'localhost'}:5001`;
+      let baseDomain = process.env.FRONTEND_URL;
+      if (!baseDomain) {
+        if (env.NODE_ENV === "production") {
+          baseDomain = `https://${env.DOMAIN || "localhost"}`;
+        } else {
+          baseDomain = `http://${env.DOMAIN || "localhost"}:5001`;
+        }
+      }
       const verificationUrl = `${baseDomain}/verify/${docData.id}`;
       const qrCodeUrl = await QRCode.toDataURL(verificationUrl);
-      
-      const { url: tempUrl } = await S3StorageService.getPresignedUrl(docData.s3Url, 900);
+
+      const { url: tempUrl } = await S3StorageService.getPresignedUrl(
+        docData.s3Url,
+        900,
+      );
 
       res.status(200).json({
-        status: 'success',
+        status: "success",
         data: {
           id: docData.id,
           s3Url: tempUrl,
