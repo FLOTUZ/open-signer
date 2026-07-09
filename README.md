@@ -46,7 +46,7 @@ Integrador recibe POST webhook ←───────────────�
 
 ```env
 # URL del frontend de firma (donde vive la ruta /firmar/:id)
-FRONTEND_URL=https://firma.tudominio.com
+DOMAIN=https://firma.tudominio.com
 
 # URL del PSC para obtener el sello NOM-151 (opcional — si no se configura, nom151Stamp queda null)
 PSC_URL=https://api.tu-psc.com/nom151/stamp

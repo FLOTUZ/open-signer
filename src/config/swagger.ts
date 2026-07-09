@@ -10,7 +10,7 @@ export const swaggerDocument = {
   },
   servers: [
     {
-      url: `http://${env.DOMAIN}:5000`,
+      url: `${env.DOMAIN}`,
       description: "Servidor Local (Docker)",
     },
   ],
@@ -132,46 +132,72 @@ export const swaggerDocument = {
       SignatureRequestItem: {
         type: "object",
         properties: {
-          id:           { type: "string", format: "uuid" },
-          documentHash: { type: "string", description: "SHA-256 del documento original" },
+          id: { type: "string", format: "uuid" },
+          documentHash: {
+            type: "string",
+            description: "SHA-256 del documento original",
+          },
           documentName: { type: "string" },
           documentSize: { type: "integer" },
           status: {
             type: "string",
             enum: ["PENDING", "SIGNED", "FAILED", "EXPIRED"],
           },
-          redirectUrl:    { type: "string", format: "uri" },
-          webhookUrl:     { type: "string", format: "uri" },
-          signatureData:  { type: "string", nullable: true, description: "Firma RSA-SHA256 en Base64" },
-          nom151Stamp:    { type: "string", nullable: true, description: "Sello NOM-151 del PSC" },
-          signerName:     { type: "string", nullable: true },
-          signerRfc:      { type: "string", nullable: true },
+          redirectUrl: { type: "string", format: "uri" },
+          webhookUrl: { type: "string", format: "uri" },
+          signatureData: {
+            type: "string",
+            nullable: true,
+            description: "Firma RSA-SHA256 en Base64",
+          },
+          nom151Stamp: {
+            type: "string",
+            nullable: true,
+            description: "Sello NOM-151 del PSC",
+          },
+          signerName: { type: "string", nullable: true },
+          signerRfc: { type: "string", nullable: true },
           cerSerialNumber: { type: "string", nullable: true },
-          expiresAt:      { type: "string", format: "date-time", description: "TTL: 24 horas desde la creación" },
-          createdAt:      { type: "string", format: "date-time" },
+          expiresAt: {
+            type: "string",
+            format: "date-time",
+            description: "TTL: 24 horas desde la creación",
+          },
+          createdAt: { type: "string", format: "date-time" },
         },
       },
 
       WebhookPayload: {
         type: "object",
-        description: "Payload enviado al webhookUrl del integrador al completarse la firma",
+        description:
+          "Payload enviado al webhookUrl del integrador al completarse la firma",
         properties: {
-          event:              { type: "string", enum: ["SIGNATURE_COMPLETED", "SIGNATURE_FAILED"] },
+          event: {
+            type: "string",
+            enum: ["SIGNATURE_COMPLETED", "SIGNATURE_FAILED"],
+          },
           signatureRequestId: { type: "string", format: "uuid" },
-          documentHash:       { type: "string" },
-          documentName:       { type: "string" },
-          signatureData:      { type: "string", nullable: true },
-          signatureString:    { type: "string", nullable: true, description: "Firma en Base64 para compatibilidad" },
-          nom151Stamp:        { type: "string", nullable: true },
-          signerName:         { type: "string", nullable: true },
-          signerRfc:          { type: "string", nullable: true },
-          cerSerialNumber:    { type: "string", nullable: true },
-          cadenaOriginal:     { type: "string", nullable: true },
-          qrCodeUrl:          { type: "string", nullable: true, description: "URL de datos (base64) del QR de verificación" },
-          completedAt:        { type: "string", format: "date-time" },
+          documentHash: { type: "string" },
+          documentName: { type: "string" },
+          signatureData: { type: "string", nullable: true },
+          signatureString: {
+            type: "string",
+            nullable: true,
+            description: "Firma en Base64 para compatibilidad",
+          },
+          nom151Stamp: { type: "string", nullable: true },
+          signerName: { type: "string", nullable: true },
+          signerRfc: { type: "string", nullable: true },
+          cerSerialNumber: { type: "string", nullable: true },
+          cadenaOriginal: { type: "string", nullable: true },
+          qrCodeUrl: {
+            type: "string",
+            nullable: true,
+            description: "URL de datos (base64) del QR de verificación",
+          },
+          completedAt: { type: "string", format: "date-time" },
         },
       },
-
     },
   },
 
@@ -569,8 +595,6 @@ export const swaggerDocument = {
       },
     },
 
-
-
     "/api/v1/signatures/verify/{documentId}": {
       get: {
         tags: ["Firma (API Key)"],
@@ -905,18 +929,21 @@ export const swaggerDocument = {
                   documento: {
                     type: "string",
                     format: "binary",
-                    description: "Archivo a firmar (PDF, XML, etc.) — máx. 20 MB",
+                    description:
+                      "Archivo a firmar (PDF, XML, etc.) — máx. 20 MB",
                   },
                   redirectUrl: {
                     type: "string",
                     format: "uri",
-                    description: "URL a donde redirigir al usuario tras firmar exitosamente",
+                    description:
+                      "URL a donde redirigir al usuario tras firmar exitosamente",
                     example: "https://tu-app.com/firma-completada",
                   },
                   webhookUrl: {
                     type: "string",
                     format: "uri",
-                    description: "URL de tu servidor donde se enviará la notificación (server-to-server)",
+                    description:
+                      "URL de tu servidor donde se enviará la notificación (server-to-server)",
                     example: "https://tu-servidor.com/webhooks/firma",
                   },
                 },
@@ -932,16 +959,23 @@ export const swaggerDocument = {
                 schema: {
                   type: "object",
                   properties: {
-                    status:  { type: "string", example: "success" },
+                    status: { type: "string", example: "success" },
                     message: { type: "string" },
                     data: {
                       type: "object",
                       properties: {
-                        id:           { type: "string", format: "uuid" },
-                        signUrl:      { type: "string", description: "URL para que el usuario firme" },
+                        id: { type: "string", format: "uuid" },
+                        signUrl: {
+                          type: "string",
+                          description: "URL para que el usuario firme",
+                        },
                         documentHash: { type: "string" },
                         documentName: { type: "string" },
-                        expiresAt:    { type: "string", format: "date-time", description: "Expira en 24h" },
+                        expiresAt: {
+                          type: "string",
+                          format: "date-time",
+                          description: "Expira en 24h",
+                        },
                       },
                     },
                   },
@@ -949,8 +983,22 @@ export const swaggerDocument = {
               },
             },
           },
-          400: { description: "Archivo faltante o URLs inválidas", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
-          401: { description: "API Key inválida", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
+          400: {
+            description: "Archivo faltante o URLs inválidas",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+          401: {
+            description: "API Key inválida",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
         },
       },
     },
@@ -982,12 +1030,12 @@ export const swaggerDocument = {
                     data: {
                       type: "object",
                       properties: {
-                        id:           { type: "string", format: "uuid" },
+                        id: { type: "string", format: "uuid" },
                         documentHash: { type: "string" },
                         documentName: { type: "string" },
                         documentSize: { type: "integer" },
-                        status:       { type: "string", enum: ["PENDING"] },
-                        expiresAt:    { type: "string", format: "date-time" },
+                        status: { type: "string", enum: ["PENDING"] },
+                        expiresAt: { type: "string", format: "date-time" },
                       },
                     },
                   },
@@ -997,7 +1045,9 @@ export const swaggerDocument = {
           },
           404: { description: "Solicitud no encontrada" },
           409: { description: "La solicitud ya fue procesada" },
-          410: { description: "La sesión de firma ha expirado (TTL: 24 horas)" },
+          410: {
+            description: "La sesión de firma ha expirado (TTL: 24 horas)",
+          },
         },
       },
     },
@@ -1023,11 +1073,13 @@ export const swaggerDocument = {
                   },
                   signatureBase64: {
                     type: "string",
-                    description: "Firma RSA-SHA256 del documentHash, codificada en Base64. Generada con Web Crypto API en el navegador del usuario.",
+                    description:
+                      "Firma RSA-SHA256 del documentHash, codificada en Base64. Generada con Web Crypto API en el navegador del usuario.",
                   },
                   cerBase64: {
                     type: "string",
-                    description: "Certificado .cer público del usuario, codificado en Base64.",
+                    description:
+                      "Certificado .cer público del usuario, codificado en Base64.",
                   },
                 },
               },
@@ -1042,17 +1094,17 @@ export const swaggerDocument = {
                 schema: {
                   type: "object",
                   properties: {
-                    status:      { type: "string", example: "success" },
-                    message:     { type: "string" },
+                    status: { type: "string", example: "success" },
+                    message: { type: "string" },
                     redirectUrl: { type: "string", format: "uri" },
                     data: {
                       type: "object",
                       properties: {
                         signatureRequestId: { type: "string", format: "uuid" },
-                        signerName:         { type: "string" },
-                        signerRfc:          { type: "string" },
-                        cerSerialNumber:    { type: "string" },
-                        nom151Obtained:     { type: "boolean" },
+                        signerName: { type: "string" },
+                        signerRfc: { type: "string" },
+                        cerSerialNumber: { type: "string" },
+                        nom151Obtained: { type: "boolean" },
                       },
                     },
                   },
@@ -1060,7 +1112,9 @@ export const swaggerDocument = {
               },
             },
           },
-          400: { description: "Certificado inválido o rechazado por la cadena SAT" },
+          400: {
+            description: "Certificado inválido o rechazado por la cadena SAT",
+          },
           404: { description: "Solicitud no encontrada" },
           409: { description: "La solicitud ya fue procesada" },
           410: { description: "La sesión de firma ha expirado" },
@@ -1072,11 +1126,20 @@ export const swaggerDocument = {
       get: {
         tags: ["Firma por Webhook"],
         summary: "Listar solicitudes de firma del cliente (API Key)",
-        description: "Retorna el historial de SignatureRequests del cliente autenticado, incluyendo el estado de los WebhookJobs para monitoreo.",
+        description:
+          "Retorna el historial de SignatureRequests del cliente autenticado, incluyendo el estado de los WebhookJobs para monitoreo.",
         security: [{ ApiKeyAuth: [] }],
         parameters: [
-          { name: "page",  in: "query", schema: { type: "integer", default: 1 } },
-          { name: "limit", in: "query", schema: { type: "integer", default: 20, maximum: 100 } },
+          {
+            name: "page",
+            in: "query",
+            schema: { type: "integer", default: 1 },
+          },
+          {
+            name: "limit",
+            in: "query",
+            schema: { type: "integer", default: 20, maximum: 100 },
+          },
         ],
         responses: {
           200: {
@@ -1086,8 +1149,13 @@ export const swaggerDocument = {
                 schema: {
                   type: "object",
                   properties: {
-                    status:     { type: "string" },
-                    data:       { type: "array", items: { $ref: "#/components/schemas/SignatureRequestItem" } },
+                    status: { type: "string" },
+                    data: {
+                      type: "array",
+                      items: {
+                        $ref: "#/components/schemas/SignatureRequestItem",
+                      },
+                    },
                     pagination: { $ref: "#/components/schemas/Pagination" },
                   },
                 },
@@ -1100,4 +1168,3 @@ export const swaggerDocument = {
     },
   },
 };
-

@@ -9,18 +9,6 @@ import { env } from "../config/env";
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
-function getFrontendSignUrl(id: string): string {
-  let base = process.env.FRONTEND_URL;
-  if (!base) {
-    if (env.NODE_ENV === "production") {
-      base = `https://${env.DOMAIN}`;
-    } else {
-      base = `http://${env.DOMAIN}`;
-    }
-  }
-  return `${base}/firmar/${id}`;
-}
-
 /**
  * Stub para obtener el sello NOM-151 de un PSC (Prestador de Servicios de Certificación).
  * Si PSC_URL no está configurada, se omite sin error (valor null).
@@ -132,7 +120,7 @@ export class SignatureRequestController {
       });
 
       // 4. Construir la URL de firma para el usuario final
-      const signUrl = getFrontendSignUrl(signatureRequest.id);
+      const signUrl = `${env.DOMAIN}/firmar/${signatureRequest.id}`;
 
       res.status(201).json({
         status: "success",

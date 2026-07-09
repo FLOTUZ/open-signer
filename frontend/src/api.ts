@@ -6,10 +6,10 @@ declare global {
   }
 }
 
-let envApiUrl = window?._env_?.VITE_API_URL || import.meta.env.VITE_API_URL;
+const envApiUrl = window?._env_?.VITE_API_URL || import.meta.env.VITE_API_URL;
 
 if (!envApiUrl || envApiUrl === "") {
-  envApiUrl = "http://localhost:5000/api/v1";
+  throw new Error("VITE_API_URL no está definido");
 }
 
 export const API = envApiUrl;

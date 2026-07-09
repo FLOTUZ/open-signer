@@ -7,7 +7,6 @@ import { SatSignatureService } from "./services/SatSignatureService";
 import { startWebhookWorker } from "./services/WebhookWorker";
 import { CrlWorkerService } from "./services/CrlWorkerService";
 
-
 // ─── BLOQUEO DE ARRANQUE: Inicialización Criptográfica ───
 function bootstrapCryptoRoots() {
   const certsDir = process.env.SAT_CERTS_DIR || "/app/certs/sat";
@@ -15,8 +14,10 @@ function bootstrapCryptoRoots() {
   const satMode = process.env.SAT_REVOCATION_CHECK_MODE;
 
   // 0. Guardia Rígida contra Errores Humanos
-  if (envMode === 'production' && satMode && satMode !== 'production') {
-    console.error(`[❌ ERROR CRÍTICO] Intentando arrancar en PRODUCCIÓN con simulación de revocación SAT activa (${satMode}). ESTO ES UN RIESGO DE SEGURIDAD.`);
+  if (envMode === "production" && satMode && satMode !== "production") {
+    console.error(
+      `[❌ ERROR CRÍTICO] Intentando arrancar en PRODUCCIÓN con simulación de revocación SAT activa (${satMode}). ESTO ES UN RIESGO DE SEGURIDAD.`,
+    );
     process.exit(1);
   }
 
@@ -28,8 +29,10 @@ function bootstrapCryptoRoots() {
     }
 
     const files = fs.readdirSync(certsDir);
-    const cerFiles = files.filter((file) =>
-      file.toLowerCase().endsWith(".cer") || file.toLowerCase().endsWith(".crt"),
+    const cerFiles = files.filter(
+      (file) =>
+        file.toLowerCase().endsWith(".cer") ||
+        file.toLowerCase().endsWith(".crt"),
     );
 
     if (cerFiles.length === 0) {
@@ -56,18 +59,16 @@ function bootstrapCryptoRoots() {
 bootstrapCryptoRoots();
 
 const server = app.listen(env.PORT, () => {
-  const portSuffix = env.NODE_ENV === "production" ? "" : `:${env.PORT}`;
-  const baseUrl = `http://${env.DOMAIN}${portSuffix}`;
+  const baseUrl = `${env.DOMAIN}`;
 
   console.log(`🚀 Servidor ejecutándose en ${baseUrl}`);
   console.log(`📄 Documentación API disponible en ${baseUrl}/docs`);
   // Iniciar el worker de webhooks integrado en el proceso principal
   startWebhookWorker();
-  
+
   // Iniciar el worker de sincronización de CRL (Listas de Revocación)
   CrlWorkerService.start();
 });
-
 
 const gracefulShutdown = async (signal: string) => {
   console.log(

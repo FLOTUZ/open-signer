@@ -96,15 +96,7 @@ export class SignatureController {
       }
 
       // Obtener el dominio del backend o usar localhost:5001 para el frontend de verificación
-      let baseDomain = process.env.FRONTEND_URL;
-      if (!baseDomain) {
-        if (env.NODE_ENV === "production") {
-          baseDomain = `https://${env.DOMAIN || "localhost"}`;
-        } else {
-          baseDomain = `http://${env.DOMAIN || "localhost"}:5001`;
-        }
-      }
-      const verificationUrl = `${baseDomain}/verify/${docData.id}`;
+      const verificationUrl = `${env.DOMAIN}/verify/${docData.id}`;
       const qrCodeUrl = await QRCode.toDataURL(verificationUrl);
 
       const { url: tempUrl } = await S3StorageService.getPresignedUrl(

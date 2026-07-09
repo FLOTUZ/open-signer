@@ -48,9 +48,7 @@ export class WebhookDispatcherService {
    */
   static async enqueue(signatureRequest: SignatureRequest): Promise<void> {
     // Generar enlace de verificación y código QR en base64
-    const baseDomain =
-      process.env.FRONTEND_URL || `http://${env.DOMAIN || "localhost"}:5001`;
-    const verificationUrl = `${baseDomain}/verify/${signatureRequest.id}`;
+    const verificationUrl = `${env.DOMAIN}/verify/${signatureRequest.id}`;
     let qrCodeUrl: string | null = null;
 
     try {
