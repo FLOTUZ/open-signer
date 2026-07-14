@@ -119,25 +119,32 @@ export default function ClientWebhooks() {
 
   const saveWebhookUrl = async (reqId: string) => {
     if (!apiKey || !editingUrlValue.trim().startsWith("http")) {
-      alert("Por favor, introduce una URL válida (ej. https://ejemplo.com/webhook)");
+      alert(
+        "Por favor, introduce una URL válida (ej. https://ejemplo.com/webhook)",
+      );
       return;
     }
     setUpdatingWebhookUrl(true);
     try {
-      const res = await fetch(`${API}/signatures/requests/${reqId}/webhook-url`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          "x-api-key": apiKey,
+      const res = await fetch(
+        `${API}/signatures/requests/${reqId}/webhook-url`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            "x-api-key": apiKey,
+          },
+          body: JSON.stringify({ webhookUrl: editingUrlValue.trim() }),
         },
-        body: JSON.stringify({ webhookUrl: editingUrlValue.trim() }),
-      });
+      );
       const data = await res.json();
       if (res.ok && data.status === "success") {
         setEditingReqId(null);
         loadRequests(); // Refresca las solicitudes y el estado de sus jobs
       } else {
-        alert(`Error al actualizar la URL: ${data.message || 'Error del servidor'}`);
+        alert(
+          `Error al actualizar la URL: ${data.message || "Error del servidor"}`,
+        );
       }
     } catch {
       alert("Error de red al actualizar la URL del webhook.");
@@ -161,20 +168,20 @@ export default function ClientWebhooks() {
           prev.map((req) => ({
             ...req,
             webhookJobs: req.webhookJobs.map((j) =>
-              j.id === jobId ? { ...j, ...data.data } : j
+              j.id === jobId ? { ...j, ...data.data } : j,
             ),
-          }))
+          })),
         );
       } else {
-        alert(`Error al reintentar: ${data.message || 'Error del servidor'}`);
+        alert(`Error al reintentar: ${data.message || "Error del servidor"}`);
         if (data.data) {
           setRequests((prev) =>
             prev.map((req) => ({
               ...req,
               webhookJobs: req.webhookJobs.map((j) =>
-                j.id === jobId ? { ...j, ...data.data } : j
+                j.id === jobId ? { ...j, ...data.data } : j,
               ),
-            }))
+            })),
           );
         }
       }
@@ -509,6 +516,10 @@ export default function ClientWebhooks() {
             <span className="code-key">webhookUrl</span>:{" "}
             <span className="code-string">https://tu-servidor.com/webhook</span>
             {"\n"}
+            {"  "}
+            <span className="code-key">rfc</span>:{" "}
+            <span className="code-string">"PEPJ800101XXX" (o el esperado)</span>
+            {"\n"}
             {"\n"}
             <span className="code-comment">
               # Respuesta → redirige al usuario a signUrl
@@ -652,11 +663,30 @@ export default function ClientWebhooks() {
 
                 {/* Estado de los webhooks */}
                 {req.webhookJobs.length > 0 && (
-                  <div style={{ marginTop: "1rem", borderTop: "1px dashed #e2e8f0", paddingTop: "0.75rem" }}>
-                    <div style={{ fontSize: "0.75rem", fontWeight: 600, color: "#64748b", marginBottom: "0.5rem" }}>
+                  <div
+                    style={{
+                      marginTop: "1rem",
+                      borderTop: "1px dashed #e2e8f0",
+                      paddingTop: "0.75rem",
+                    }}
+                  >
+                    <div
+                      style={{
+                        fontSize: "0.75rem",
+                        fontWeight: 600,
+                        color: "#64748b",
+                        marginBottom: "0.5rem",
+                      }}
+                    >
                       📡 Historial de Envío de Webhooks:
                     </div>
-                    <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                    <div
+                      style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "0.5rem",
+                      }}
+                    >
                       {req.webhookJobs.map((job) => (
                         <div
                           key={job.id}
@@ -669,12 +699,32 @@ export default function ClientWebhooks() {
                             padding: "0.75rem",
                           }}
                         >
-                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                              <span className={`webhook-job-chip ${job.status.toLowerCase()}`}>
+                          <div
+                            style={{
+                              display: "flex",
+                              justifyContent: "space-between",
+                              alignItems: "center",
+                            }}
+                          >
+                            <div
+                              style={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "0.5rem",
+                              }}
+                            >
+                              <span
+                                className={`webhook-job-chip ${job.status.toLowerCase()}`}
+                              >
                                 {job.status}
                               </span>
-                              <span style={{ fontSize: "0.75rem", color: "#64748b", fontWeight: 500 }}>
+                              <span
+                                style={{
+                                  fontSize: "0.75rem",
+                                  color: "#64748b",
+                                  fontWeight: 500,
+                                }}
+                              >
                                 Intento {job.attempts}
                               </span>
                               {job.lastResponseCode && (
@@ -682,8 +732,14 @@ export default function ClientWebhooks() {
                                   style={{
                                     fontSize: "0.75rem",
                                     fontWeight: 600,
-                                    color: job.status === "SUCCESS" ? "#16a34a" : "#dc2626",
-                                    background: job.status === "SUCCESS" ? "#f0fdf4" : "#fef2f2",
+                                    color:
+                                      job.status === "SUCCESS"
+                                        ? "#16a34a"
+                                        : "#dc2626",
+                                    background:
+                                      job.status === "SUCCESS"
+                                        ? "#f0fdf4"
+                                        : "#fef2f2",
                                     padding: "0.1rem 0.4rem",
                                     borderRadius: "4px",
                                   }}
@@ -692,24 +748,39 @@ export default function ClientWebhooks() {
                                 </span>
                               )}
                             </div>
-                            
+
                             <button
                               className="btn btn-outline btn-sm"
-                              style={{ padding: "0.25rem 0.5rem", fontSize: "0.7rem", height: "auto" }}
+                              style={{
+                                padding: "0.25rem 0.5rem",
+                                fontSize: "0.7rem",
+                                height: "auto",
+                              }}
                               onClick={() => retryWebhook(job.id)}
                               disabled={retryingJobId === job.id}
                             >
-                              {retryingJobId === job.id ? "Enviando..." : "🔁 Reintentar"}
+                              {retryingJobId === job.id
+                                ? "Enviando..."
+                                : "🔁 Reintentar"}
                             </button>
                           </div>
 
-                          <div style={{ fontSize: "0.7rem", color: "#64748b", marginTop: "0.35rem" }}>
+                          <div
+                            style={{
+                              fontSize: "0.7rem",
+                              color: "#64748b",
+                              marginTop: "0.35rem",
+                            }}
+                          >
                             {job.lastAttemptAt && (
-                              <span>Último intento: {fmtDate(job.lastAttemptAt)}</span>
+                              <span>
+                                Último intento: {fmtDate(job.lastAttemptAt)}
+                              </span>
                             )}
                             {job.status === "PENDING" && job.nextRetryAt && (
                               <span style={{ marginLeft: "1rem" }}>
-                                Próximo reintento programado: {fmtDate(job.nextRetryAt)}
+                                Próximo reintento programado:{" "}
+                                {fmtDate(job.nextRetryAt)}
                               </span>
                             )}
                           </div>
@@ -729,7 +800,14 @@ export default function ClientWebhooks() {
                                 border: "1px solid #1e293b",
                               }}
                             >
-                              <div style={{ color: "#94a3b8", fontWeight: 600, marginBottom: "0.25rem", fontFamily: "inherit" }}>
+                              <div
+                                style={{
+                                  color: "#94a3b8",
+                                  fontWeight: 600,
+                                  marginBottom: "0.25rem",
+                                  fontFamily: "inherit",
+                                }}
+                              >
                                 Respuesta del servidor:
                               </div>
                               {job.lastResponseBody}
@@ -741,10 +819,25 @@ export default function ClientWebhooks() {
                   </div>
                 )}
 
-                <div className="sig-request-meta" style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "0.5rem", marginTop: "0.5rem" }}>
+                <div
+                  className="sig-request-meta"
+                  style={{
+                    display: "flex",
+                    flexWrap: "wrap",
+                    alignItems: "center",
+                    gap: "0.5rem",
+                    marginTop: "0.5rem",
+                  }}
+                >
                   <span>Webhook destino:</span>
                   {editingReqId === req.id ? (
-                    <div style={{ display: "inline-flex", alignItems: "center", gap: "0.25rem" }}>
+                    <div
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "0.25rem",
+                      }}
+                    >
                       <input
                         type="text"
                         value={editingUrlValue}
@@ -763,7 +856,11 @@ export default function ClientWebhooks() {
                       />
                       <button
                         className="btn btn-black btn-sm"
-                        style={{ padding: "0.15rem 0.5rem", fontSize: "0.7rem", height: "auto" }}
+                        style={{
+                          padding: "0.15rem 0.5rem",
+                          fontSize: "0.7rem",
+                          height: "auto",
+                        }}
                         onClick={() => saveWebhookUrl(req.id)}
                         disabled={updatingWebhookUrl}
                       >
@@ -771,7 +868,11 @@ export default function ClientWebhooks() {
                       </button>
                       <button
                         className="btn btn-outline btn-sm"
-                        style={{ padding: "0.15rem 0.5rem", fontSize: "0.7rem", height: "auto" }}
+                        style={{
+                          padding: "0.15rem 0.5rem",
+                          fontSize: "0.7rem",
+                          height: "auto",
+                        }}
                         onClick={() => setEditingReqId(null)}
                         disabled={updatingWebhookUrl}
                       >
@@ -780,7 +881,9 @@ export default function ClientWebhooks() {
                     </div>
                   ) : (
                     <>
-                      <code style={{ fontSize: "0.68rem" }}>{req.webhookUrl}</code>
+                      <code style={{ fontSize: "0.68rem" }}>
+                        {req.webhookUrl}
+                      </code>
                       {req.webhookJobs.some((j) => j.status === "FAILED") && (
                         <button
                           onClick={() => {
@@ -795,7 +898,7 @@ export default function ClientWebhooks() {
                             fontSize: "0.75rem",
                             textDecoration: "underline",
                             padding: 0,
-                            marginLeft: "0.25rem"
+                            marginLeft: "0.25rem",
                           }}
                         >
                           ✏️ Editar URL
