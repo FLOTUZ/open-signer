@@ -103,6 +103,11 @@ export const createSignatureRequestSchema = z.object({
     webhookUrl: z
       .string({ required_error: 'webhookUrl es obligatorio' })
       .url('webhookUrl debe ser una URL válida'),
+    rfc: z
+      .string({ required_error: 'El RFC del firmante es obligatorio' })
+      .min(12, 'El RFC debe tener al menos 12 caracteres')
+      .max(13, 'El RFC no puede tener más de 13 caracteres')
+      .toUpperCase(),
   }),
   // La validación del archivo se hace en el controlador (docFile null check)
   // para dar un mensaje de error más descriptivo

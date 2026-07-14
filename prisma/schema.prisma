@@ -110,6 +110,8 @@ model SignatureRequest {
   redirectUrl     String?                @map("redirect_url")
   // A dónde avisar al integrador (servidor a servidor)
   webhookUrl      String                 @map("webhook_url")
+  // RFC que se solicita firmar obligatoriamente
+  requestedRfc    String                 @default("") @map("requested_rfc")
   // Resultado de la firma (Base64 RSA-SHA256)
   signatureData   String?                @map("signature_data") @db.Text
   // Sello NOM-151 del PSC (si está configurado)

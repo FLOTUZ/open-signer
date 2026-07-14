@@ -79,9 +79,10 @@ export class SignatureRequestController {
       );
     }
 
-    const { redirectUrl, webhookUrl } = req.body as {
+    const { redirectUrl, webhookUrl, rfc } = req.body as {
       redirectUrl?: string;
       webhookUrl: string;
+      rfc: string;
     };
 
     try {
@@ -112,6 +113,7 @@ export class SignatureRequestController {
           documentUrl,
           redirectUrl: redirectUrl || null,
           webhookUrl,
+          requestedRfc: rfc,
           clientId: req.user!.id,
           expiresAt,
           clientName,
@@ -167,6 +169,7 @@ export class SignatureRequestController {
           createdAt: true,
           clientName: true,
           logoUrl: true,
+          requestedRfc: true,
         },
       });
 
@@ -297,6 +300,13 @@ export class SignatureRequestController {
 
       const { titular_nombre, titular_rfc, numero_serie } =
         certValidation.metadata;
+
+      if (titular_rfc !== signatureRequest.requestedRfc) {
+        throw new AppError(
+          `El RFC del certificado (${titular_rfc}) no coincide con el RFC solicitado para esta firma (${signatureRequest.requestedRfc}).`,
+          400
+        );
+      }
 
       // 3. Solicitar sello NOM-151 al PSC (opcional — no bloquea si no está configurado)
       const nom151Stamp = await requestNom151Stamp(

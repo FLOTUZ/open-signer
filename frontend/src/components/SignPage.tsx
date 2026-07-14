@@ -28,6 +28,7 @@ interface SignRequestContext {
   expiresAt: string;
   clientName?: string | null;
   logoUrl?: string | null;
+  requestedRfc?: string;
 }
 
 type Step = "loading" | "ready" | "signing" | "success" | "error";
@@ -417,6 +418,30 @@ export default function SignPage({ requestId: propRequestId }: SignPageProps) {
                 La firma se realiza completamente en tu navegador.
               </span>
             </div>
+
+            {/* Aviso de RFC esperado si existe */}
+            {context.requestedRfc && (
+              <div
+                style={{
+                  backgroundColor: "#eff6ff",
+                  border: "1px solid #bfdbfe",
+                  borderRadius: "8px",
+                  padding: "12px 16px",
+                  marginBottom: "20px",
+                  color: "#1e3a8a",
+                  fontSize: "0.95rem",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "10px",
+                }}
+              >
+                <FiAlertTriangle size={18} />
+                <span>
+                  <strong>Importante:</strong> El documento debe ser firmado
+                  con la e.firma del RFC <strong>{context.requestedRfc}</strong>.
+                </span>
+              </div>
+            )}
 
             {/* Formulario */}
             <div className="sign-form-card">
