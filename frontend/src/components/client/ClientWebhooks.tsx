@@ -104,6 +104,7 @@ export default function ClientWebhooks() {
   // ── Estado: formulario de prueba de webhook ──
   const [testUrl, setTestUrl] = useState("");
   const [testRedirect, setTestRedirect] = useState("");
+  const [testRfc, setTestRfc] = useState("");
   const [testFile, setTestFile] = useState<File | null>(null);
   const [testing, setTesting] = useState(false);
   const [testResult, setTestResult] = useState<{
@@ -221,7 +222,7 @@ export default function ClientWebhooks() {
 
   // ── Prueba de webhook ─────────────────────────────────────────────────────
   const handleTestWebhook = async () => {
-    if (!testUrl || !testFile || !apiKey) return;
+    if (!testUrl || !testFile || !testRfc || !apiKey) return;
     setTesting(true);
     setTestResult(null);
 
@@ -232,6 +233,7 @@ export default function ClientWebhooks() {
         formData.append("redirectUrl", testRedirect.trim());
       }
       formData.append("webhookUrl", testUrl);
+      formData.append("rfc", testRfc.trim());
 
       const res = await fetch(`${API}/signatures/request`, {
         method: "POST",
@@ -402,6 +404,17 @@ export default function ClientWebhooks() {
           </div>
 
           <div className="form-group" style={{ marginBottom: "1rem" }}>
+            <label htmlFor="wh-rfc">RFC del Firmante (Obligatorio)</label>
+            <input
+              id="wh-rfc"
+              type="text"
+              placeholder="Ej. PEPJ800101XXX"
+              value={testRfc}
+              onChange={(e) => setTestRfc(e.target.value.toUpperCase())}
+            />
+          </div>
+
+          <div className="form-group" style={{ marginBottom: "1rem" }}>
             <label htmlFor="wh-doc-file">
               Documento a Firmar (PDF, XML, etc.)
             </label>
@@ -429,7 +442,7 @@ export default function ClientWebhooks() {
           <button
             className="btn btn-black"
             onClick={handleTestWebhook}
-            disabled={!testUrl || !testFile || !apiKey || testing}
+            disabled={!testUrl || !testFile || !testRfc || !apiKey || testing}
           >
             {testing ? "Creando solicitud..." : "Generar Link de Firma →"}
           </button>
