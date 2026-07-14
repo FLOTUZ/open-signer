@@ -95,15 +95,23 @@ export class SatSignatureService {
         key === "OID.2.5.4.45" ||
         key === "2.5.4.45" ||
         key === "X500UNIQUEIDENTIFIER" ||
-        key === "SERIALNUMBER" ||
         key === "UNIQUEIDENTIFIER"
       ) {
+        // Estos campos siempre contienen el RFC
         rfc = val;
+      } else if (key === "SERIALNUMBER") {
+        // En algunos certificados del SAT, SERIALNUMBER contiene el CURP (18 chars)
+        // En otros, puede contener el RFC (12 o 13 chars).
+        // Solo lo usamos como RFC si no tenemos uno ya extraído y si tiene longitud de RFC.
+        if (rfc === "Desconocido" && (val.length === 12 || val.length === 13)) {
+          rfc = val;
+        }
       }
     }
 
     if (rfc === "Desconocido") {
-      const rfcRegex = /[A-Z&Ñ]{3,4}\d{6}[A-Z\d]{3}/i;
+      // Expresión regular para RFC con límites de palabra para evitar capturar los primeros 13 caracteres de un CURP
+      const rfcRegex = /\b[A-Z&Ñ]{3,4}\d{6}[A-Z\d]{3}\b/i;
       const match = subjectStr.match(rfcRegex);
       if (match) {
         rfc = match[0].toUpperCase();
