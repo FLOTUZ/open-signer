@@ -43,21 +43,26 @@ referencia.
 
 ## Integración con Dokploy / CI-CD
 
-Dokploy despliega desde imágenes ya construidas en GHCR (no desde Git
-directamente en el VPS), y los certificados viven en el host, no en la
-imagen Docker (ver montaje `:ro` en `docker-compose.yml`). Por eso este
-script **no** corre dentro del pipeline de GitHub Actions.
+La imagen Docker incluye por defecto los certificados versionados en
+`certs/sat/` del repositorio (públicos, no son secretos), así que un VPS
+nuevo administrado por Dokploy no necesita ningún paso manual para el primer
+deploy: la imagen que sube el pipeline de GitHub Actions ya arranca sola. Por
+eso este script **no** corre dentro del pipeline de GitHub Actions.
 
-Flujo recomendado para un VPS nuevo administrado por Dokploy:
+Este script solo es necesario si quieres **rotar** los certificados sin
+esperar al próximo build/deploy de la imagen (por ejemplo, el SAT publicó una
+nueva raíz y quieres aplicarla ya). Flujo para ese caso:
 
-1. Aprovisionas el VPS y conectas Dokploy.
-2. Antes del primer deploy, te conectas por SSH una vez y corres:
+1. Te conectas por SSH al VPS una vez y corres:
    ```bash
    sudo ./scripts/install-sat-certs.sh
    ```
+2. En Dokploy, monta `/etc/sat-certs` (host) en `/app/certs/sat` (contenedor)
+   como bind mount de la aplicación — el `CMD` del contenedor sobreescribe los
+   certificados incluidos en la imagen con lo que encuentre ahí al arrancar.
 3. A partir de ahí, todos los redeploys vía webhook de Dokploy reutilizan
-   `/etc/sat-certs` automáticamente, sin tocar certificados de nuevo.
-4. Solo repites el paso 2 si el SAT rota sus certificados raíz.
+   `/etc/sat-certs` automáticamente.
+4. Repites el paso 1 cada vez que el SAT rote sus certificados raíz.
 
 ## Variables de Entorno y Simulador de Revocación
 

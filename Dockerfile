@@ -60,10 +60,16 @@ COPY --from=backend-builder --chown=node:node /app/public ./public
 # Copiar el build estático del frontend, servido directamente por Express
 COPY --from=frontend-builder --chown=node:node /app/frontend/dist ./frontend-dist
 
+# Certificados Raíz/Intermedios del SAT (públicos, versionados en el repo).
+# Se incluyen por defecto para que el contenedor arranque sin depender de un
+# volumen externo. Si en runtime se monta /etc/sat-certs (ver docker-compose.yml
+# o el paso de Dokploy en el README), su contenido sobreescribe estos al iniciar.
+COPY --chown=node:node certs/sat ./certs/sat
+
 # Crear directorio de uploads con los permisos del usuario sin privilegios
 RUN mkdir -p uploads
 
 EXPOSE 5000
 
-# Ejecutar migraciones pendientes automáticamente y copiar certificados (failsafe)
-CMD ["sh", "-c", "mkdir -p /app/certs/sat && cp -r /etc/sat-certs/* /app/certs/sat/ 2>/dev/null || true && npx prisma migrate deploy && node dist/server.js"]
+# Ejecutar migraciones pendientes automáticamente y aplicar override de certificados si existe
+CMD ["sh", "-c", "cp -r /etc/sat-certs/* /app/certs/sat/ 2>/dev/null || true && npx prisma migrate deploy && node dist/server.js"]

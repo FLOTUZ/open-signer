@@ -158,11 +158,13 @@ Las sesiones de firma con status `PENDING` que superen su `expiresAt` (24 horas)
 
 ### 3.3 Docker Compose (Recomendado)
 
-**CRÍTICO:** Por arquitectura de seguridad, la aplicación abortará su arranque si no encuentra la cadena de confianza pública del SAT. Los certificados no se incluyen en la imagen Docker ni en el repositorio. Deben residir en el host.
+**CRÍTICO:** Por arquitectura de seguridad, la aplicación abortará su arranque si no encuentra la cadena de confianza pública del SAT. Los certificados raíz/intermedios (`certs/sat/*.cer`, `*.crt`) **sí están versionados en el repositorio** (son públicos, no son secretos) y la imagen Docker los incluye por defecto — no necesitas ningún paso adicional para levantar el proyecto.
 
-1. **Instalar los certificados con el script automatizado (recomendado):**
+Ese paso extra solo es necesario si quieres **rotar/actualizar** los certificados sin reconstruir la imagen (por ejemplo, si el SAT publica una nueva raíz y no quieres esperar al próximo deploy). En runtime, el contenedor sobreescribe los certificados incluidos con lo que encuentre montado en `/etc/sat-certs` del host:
 
-   El repositorio incluye `scripts/install-sat-certs.sh`, que descarga el paquete oficial de certificados del SAT, lo extrae y lo instala con los permisos correctos en `/etc/sat-certs`. Se ejecuta **una sola vez por servidor**, antes del primer `docker compose up`:
+1. **Instalar los certificados actualizados con el script automatizado (recomendado):**
+
+   El repositorio incluye `scripts/install-sat-certs.sh`, que descarga el paquete oficial de certificados del SAT, lo extrae y lo instala con los permisos correctos en `/etc/sat-certs`:
 
    ```bash
    chmod +x scripts/install-sat-certs.sh
@@ -173,7 +175,7 @@ Las sesiones de firma con status `PENDING` que superen su `expiresAt` (24 horas)
 
    En corridas futuras (por ejemplo, en un servidor nuevo) el script verifica automáticamente contra ese hash guardado, sin pedirte nada ni requerir que edites el script. Si el SAT llega a rotar sus certificados raíz, el script se detendrá con una alerta; en ese caso, confirma el cambio y borra `/etc/sat-certs.sha256` para registrar el nuevo hash de confianza.
 
-   Ver `docs/sat-certs.md` para más detalle sobre este flujo, su integración con Dokploy, certificados de prueba para desarrollo, y un TODO pendiente sobre soporte a CSD (Certificados de Sello Digital).
+   Ver [sat-cets.md](sat-cets.md) para más detalle sobre este flujo, su integración con Dokploy, certificados de prueba para desarrollo, y un TODO pendiente sobre soporte a CSD (Certificados de Sello Digital).
 
 2. **Instalación manual (alternativa):**
 
@@ -190,7 +192,8 @@ Las sesiones de firma con status `PENDING` que superen su `expiresAt` (24 horas)
    sudo chmod 755 /etc/sat-certs
    sudo chmod 644 /etc/sat-certs/*.cer
    ```
-Para iniciar el Backend y el Frontend en contenedores Docker leyendo la configuración del archivo `.env` y conectándose a tu base de datos externa (tu PostgreSQL local nativo o AWS RDS):
+
+Con o sin ese paso extra, para levantar el proyecto en Docker Compose conectado a tu base de datos externa (tu PostgreSQL local nativo o AWS RDS):
 
 1. Asegúrate de configurar el archivo `.env` en la raíz. Para conectar a una base de datos PostgreSQL nativa en tu máquina local desde los contenedores, usa la dirección especial `host.docker.internal`:
    ```env
@@ -212,11 +215,10 @@ Si prefieres no compilar la imagen localmente (y por lo tanto no necesitas el c�
 ```bash
 docker run -d --name opensigner-app -p 5000:5000 \
   --env-file .env \
-  -v /etc/sat-certs:/app/certs/sat \
   ghcr.io/flotuz/opensigner:latest
 ```
 
-*(Asegúrate de haber configurado tu archivo `.env` y el directorio de certificados en el host como se menciona en los pasos anteriores).*
+*(Asegúrate de haber configurado tu archivo `.env` como se menciona en los pasos anteriores. El volumen `-v /etc/sat-certs:/app/certs/sat` es opcional — solo agrégalo si quieres sobreescribir los certificados SAT incluidos en la imagen, ver 3.3).*
 
 ---
 
@@ -381,19 +383,23 @@ Dado que la imagen se construye y sube a GHCR de forma externa, en Dokploy debes
    - **Registry**: GitHub Container Registry (`ghcr.io`).
    - **Image**: `ghcr.io/flotuz/opensigner:latest` (o tu usuario si hiciste un fork).
 4. En la pestaña **Environment**, define las variables necesarias (`DATABASE_URL`, `JWT_SECRET`, `PORT=5000`, etc.).
-5. En la pestaña **Advanced**, en la sección de Volúmenes (Bind Mounts), agrega la ruta de los certificados:
+5. Asigna tu dominio (ej. `tudominio.com`) al puerto expuesto por el contenedor (`5000`). Este único puerto sirve tanto la API (`/api/v1`, `/docs`) como la SPA del frontend.
+
+Con eso el contenedor ya arranca: la imagen incluye los certificados raíz del SAT versionados en el repositorio (`certs/sat/`), no depende de ningún volumen.
+
+**Opcional — rotar certificados sin reconstruir la imagen:** si el SAT publica una nueva raíz y no quieres esperar al próximo deploy, puedes montar un volumen que sobreescriba los certificados incluidos:
+
+1. En la pestaña **Advanced** de la aplicación en Dokploy, en la sección de Volúmenes (Bind Mounts), agrega:
    - **Host Path**: `/etc/sat-certs`
    - **Mount Path**: `/app/certs/sat`
-   *(Sin este volumen, el contenedor fallará al arrancar por seguridad).*
-6. Asigna tu dominio (ej. `tudominio.com`) al puerto expuesto por el contenedor (`5000`). Este único puerto sirve tanto la API (`/api/v1`, `/docs`) como la SPA del frontend.
-7. Entrar vía SSH a tu servidor (VPS) e instalar manualmente los certificados descargando el script:
-```bash
-sudo apt-get update && sudo apt-get install -y unzip curl wget
-wget https://raw.githubusercontent.com/FLOTUZ/open-signer/master/scripts/install-sat-certs.sh -O install-sat-certs.sh
-chmod +x install-sat-certs.sh
-sudo ./install-sat-certs.sh -y
-```
-*(Este script descargará, verificará e instalará los certificados en `/etc/sat-certs` automáticamente, preparándolos para que el contenedor los copie al iniciar).*
+2. Entra vía SSH a tu servidor (VPS) e instala los certificados actualizados con el script:
+   ```bash
+   sudo apt-get update && sudo apt-get install -y unzip curl wget
+   wget https://raw.githubusercontent.com/FLOTUZ/open-signer/master/scripts/install-sat-certs.sh -O install-sat-certs.sh
+   chmod +x install-sat-certs.sh
+   sudo ./install-sat-certs.sh -y
+   ```
+   *(Este script descarga, verifica e instala los certificados en `/etc/sat-certs`, que el contenedor copiará por encima de los que trae la imagen al iniciar).*
 
 ---
 
