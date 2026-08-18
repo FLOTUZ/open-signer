@@ -12,7 +12,8 @@ import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { env } from "../config/env";
 import { prisma } from "../config/db";
 
-const HMAC_SECRET = () => env.JWT_SECRET;
+// JWT_SECRET es obligatorio (validado en config/env.ts).
+const HMAC_SECRET = (): string => env.JWT_SECRET;
 
 export class S3StorageService {
   private static s3Client: S3Client | null = null;
@@ -175,9 +176,6 @@ export class S3StorageService {
 
     // Modo local: token HMAC temporal firmado internamente
     const secret = HMAC_SECRET();
-    if (!secret) {
-      throw new Error("JWT_SECRET no está configurado");
-    }
     const payload = Buffer.from(
       JSON.stringify({ key, exp: Math.floor(expiresAt.getTime() / 1000) }),
     ).toString("base64url");
@@ -198,9 +196,6 @@ export class S3StorageService {
   public static verifyLocalDownloadToken(token: string): string | null {
     try {
       const secret = HMAC_SECRET();
-      if (!secret) {
-        throw new Error("JWT_SECRET no está configurado");
-      }
       const [payload, sig] = token.split(".");
       if (!payload || !sig) return null;
 
@@ -208,7 +203,16 @@ export class S3StorageService {
         .createHmac("sha256", secret)
         .update(payload)
         .digest("base64url");
-      if (sig !== expectedSig) return null;
+
+      // Comparación en tiempo constante para evitar timing attacks sobre la firma.
+      const sigBuf = Buffer.from(sig);
+      const expectedBuf = Buffer.from(expectedSig);
+      if (
+        sigBuf.length !== expectedBuf.length ||
+        !crypto.timingSafeEqual(sigBuf, expectedBuf)
+      ) {
+        return null;
+      }
 
       const data = JSON.parse(
         Buffer.from(payload, "base64url").toString("utf8"),

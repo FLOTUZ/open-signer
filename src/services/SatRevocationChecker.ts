@@ -3,6 +3,7 @@ import forge from "node-forge";
 // @ts-ignore
 import ocsp from "ocsp";
 import { prisma } from "../config/db";
+import { assertPublicHttpUrl } from "../core/security/ssrfGuard";
 
 export class SatRevocationChecker {
   /**
@@ -154,6 +155,12 @@ export class SatRevocationChecker {
     // 3. Consulta OCSP en Tiempo Real (Fase 1)
     if (ocspUrl) {
       try {
+        // Defensa contra SSRF: la URL de OCSP viene de una extensión del
+        // certificado (potencialmente controlado por un usuario no
+        // autenticado en endpoints públicos). Se valida que no apunte a
+        // redes privadas ni a endpoints de metadatos de nube antes de usarla.
+        await assertPublicHttpUrl(ocspUrl);
+
         const isRevokedOCSP = await this.checkOcspOnline(
           cerBuffer,
           issuerCerBuffer,

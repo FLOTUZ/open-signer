@@ -12,6 +12,7 @@ import { tokenAuth } from '../core/middlewares/tokenAuth';
 import { hybridAuth } from '../core/middlewares/hybridAuth';
 import { requireRole } from '../core/middlewares/requireRole';
 import { upload, singleCerUpload, singleStampedUpload, signatureRequestDocUpload } from '../core/middlewares/upload';
+import { authRateLimiter, publicSignatureRateLimiter } from '../core/middlewares/rateLimit';
 import { Role } from '@prisma/client';
 import {
   createUserSchema,
@@ -30,9 +31,9 @@ import {
 const router = Router();
 
 // ─── AUTENTICACIÓN ────────────────────────────────────────────────────────────
-router.post('/auth/login',           validate(loginSchema),          AuthController.login);
+router.post('/auth/login',           authRateLimiter, validate(loginSchema),          AuthController.login);
 router.get( '/auth/me',              tokenAuth,                      AuthController.me);
-router.post('/auth/change-password', tokenAuth, validate(changePasswordSchema), AuthController.changePassword);
+router.post('/auth/change-password', authRateLimiter, tokenAuth, validate(changePasswordSchema), AuthController.changePassword);
 
 // ─── ADMINISTRACIÓN (SUPER_ADMIN) ─────────────────────────────────────────────
 router.post(
@@ -131,7 +132,7 @@ router.get(
 // 3. El frontend envía la firma generada en el navegador (público)
 router.post(
   '/signatures/complete',
-  validate(completeSignatureRequestSchema),
+  publicSignatureRateLimiter, validate(completeSignatureRequestSchema),
   SignatureRequestController.completeRequest
 );
 
@@ -157,7 +158,7 @@ router.patch(
 );
 
 // ─── RUTAS PÚBLICAS ───────────────────────────────────────────────────────────
-router.post('/certificates/validate',       singleCerUpload,           CertificateController.validateCertificate);
+router.post('/certificates/validate',       publicSignatureRateLimiter, singleCerUpload, CertificateController.validateCertificate);
 router.get( '/signatures/verify/:documentId',                          SignatureController.verifyDocument);
 router.get( '/documentation', (_req, res) => {
   const fs = require('fs');

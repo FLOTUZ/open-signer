@@ -308,6 +308,32 @@ export class SignatureRequestController {
         );
       }
 
+      // 2.5. Verificación criptográfica de la firma: comprobar que
+      // signatureBase64 sea efectivamente el resultado de firmar el
+      // documentHash con la llave privada correspondiente a la llave pública
+      // del certificado (.cer) recibido. Sin este paso, cualquier persona con
+      // UN certificado vigente (aunque no lo haya usado para firmar nada)
+      // podría enviar bytes arbitrarios como firma y el sistema los aceptaría.
+      // El frontend firma con RSASSA-PKCS1-v1_5 + SHA-256 sobre los bytes
+      // UTF-8 del documentHash hexadecimal (ver frontend/src/components/SignPage.tsx).
+      let isSignatureValid = false;
+      try {
+        const cert = new crypto.X509Certificate(cerBuffer);
+        isSignatureValid = crypto
+          .createVerify("RSA-SHA256")
+          .update(signatureRequest.documentHash, "utf8")
+          .verify(cert.publicKey, signatureBase64, "base64");
+      } catch {
+        isSignatureValid = false;
+      }
+
+      if (!isSignatureValid) {
+        throw new AppError(
+          "La firma no corresponde al documento y/o al certificado proporcionados. Verifica que hayas firmado con la llave privada correcta.",
+          400,
+        );
+      }
+
       // 3. Solicitar sello NOM-151 al PSC (opcional — no bloquea si no está configurado)
       const nom151Stamp = await requestNom151Stamp(
         signatureRequest.documentHash,

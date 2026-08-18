@@ -6,11 +6,18 @@ dotenv.config();
 const envSchema = z.object({
   DOMAIN: z.string().default("localhost"),
   PORT: z.coerce.number().default(3000),
+  // Sin valor por defecto inseguro: si no se declara explícitamente, se asume
+  // "production" (el modo más estricto) para evitar que un despliegue real
+  // arranque accidentalmente con las validaciones de desarrollo relajadas.
   NODE_ENV: z
     .enum(["development", "production", "test"])
-    .default("development"),
+    .default("production"),
   DATABASE_URL: z.string().url(),
-  JWT_SECRET: z.string().optional(),
+  // Obligatorio y con longitud mínima: firma los tokens de sesión y las URLs
+  // de descarga temporal. Nunca debe depender de un valor de respaldo.
+  JWT_SECRET: z
+    .string({ required_error: "JWT_SECRET es obligatorio." })
+    .min(32, "JWT_SECRET debe tener al menos 32 caracteres aleatorios."),
   AWS_REGION: z.string().optional(),
   AWS_S3_BUCKET: z.string().optional(),
   AWS_ACCESS_KEY_ID: z.string().optional(),

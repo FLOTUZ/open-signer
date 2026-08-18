@@ -5,6 +5,7 @@ import path from 'path';
 import os from 'os';
 import { exec } from 'child_process';
 import util from 'util';
+import { assertPublicHttpUrl } from '../core/security/ssrfGuard';
 
 const execPromise = util.promisify(exec);
 
@@ -64,6 +65,11 @@ export class CrlWorkerService {
     let recordsCount = 0;
 
     try {
+      // 0. Defensa contra SSRF: la URL puede provenir de una extensión CDP de
+      // un certificado enviado por un usuario no autenticado (endpoints
+      // públicos de validación/firma). Se valida antes de hacer la petición.
+      await assertPublicHttpUrl(url);
+
       // 1. Descargar el archivo CRL con headers para evitar WAF (403 Forbidden)
       const response = await fetch(url, {
         signal: AbortSignal.timeout(60000),

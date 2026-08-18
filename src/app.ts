@@ -21,8 +21,10 @@ app.use(auditLogger);
 // 3. Montar Documentación API de Swagger
 app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
-// 4. Servir archivos locales en desarrollo (fallback local de S3)
-app.use('/uploads', express.static(path.resolve(env.LOCAL_STORAGE_PATH)));
+// 4. Los documentos en almacenamiento local (fallback sin S3) NUNCA se sirven
+//    como carpeta estática pública: solo son accesibles vía
+//    GET /api/v1/documents/local-download?token=... (token HMAC con TTL),
+//    que sí verifica autorización antes de entregar el archivo.
 
 // 4b. Servir archivos estáticos públicos
 app.use('/public', express.static(path.resolve(__dirname, '../public')));

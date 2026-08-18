@@ -9,10 +9,10 @@ export interface TokenPayload {
 }
 
 export class TokenService {
-  // Use a secret key from environment or a fallback for development
-  private static readonly SECRET =
-    env.AWS_SECRET_ACCESS_KEY ||
-    "opensigner-local-fallback-token-secret-key-98765";
+  // JWT_SECRET es obligatorio (validado en config/env.ts) — nunca debe existir
+  // un valor de respaldo hardcodeado ni reutilizar credenciales de otro dominio
+  // (p. ej. AWS_SECRET_ACCESS_KEY) para firmar tokens de sesión.
+  private static readonly SECRET = env.JWT_SECRET;
 
   /**
    * Genera un token firmado con HMAC-SHA256 y serializado en base64url.
@@ -52,7 +52,13 @@ export class TokenService {
         .update(payloadBase64)
         .digest("base64url");
 
-      if (signature !== expectedSignature) {
+      // Comparación en tiempo constante para evitar timing attacks sobre la firma.
+      const signatureBuf = Buffer.from(signature);
+      const expectedBuf = Buffer.from(expectedSignature);
+      if (
+        signatureBuf.length !== expectedBuf.length ||
+        !crypto.timingSafeEqual(signatureBuf, expectedBuf)
+      ) {
         return null; // Firma inválida (token manipulado)
       }
 
