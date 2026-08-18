@@ -4,6 +4,7 @@ import { prisma } from '../config/db';
 import { TokenService } from '../services/TokenService';
 import { AppError } from '../core/errors/AppError';
 import { Role } from '@prisma/client';
+import { env } from '../config/env';
 
 export class AuthController {
   /**
@@ -45,12 +46,14 @@ export class AuthController {
       if (userCount === 0) {
         console.log('🌱 Base de datos vacía. Auto-creando usuario inicial Super Admin...');
         const salt = crypto.randomBytes(16).toString('hex');
-        const hash = crypto.pbkdf2Sync('admin12345', salt, 10000, 64, 'sha512').toString('hex');
+        const hash = crypto
+          .pbkdf2Sync(env.SUPER_ADMIN_PASSWORD, salt, 10000, 64, 'sha512')
+          .toString('hex');
         const passwordHash = `${salt}:${hash}`;
 
         await prisma.user.create({
           data: {
-            email: 'admin@opensigner.com',
+            email: env.SUPER_ADMIN_EMAIL,
             passwordHash,
             role: Role.SUPER_ADMIN,
             mustChangePassword: true,

@@ -18,6 +18,9 @@ const envSchema = z.object({
   // Endpoint S3-compatible (ej. RustFS/MinIO en local). Si no se define, se usa AWS S3 real.
   AWS_S3_ENDPOINT: z.string().optional(),
   LOCAL_STORAGE_PATH: z.string().default("./uploads"),
+  // Credenciales del Super Admin auto-creado en el primer login (DB vacía).
+  SUPER_ADMIN_EMAIL: z.string().email().default("admin@opensigner.com"),
+  SUPER_ADMIN_PASSWORD: z.string().min(8).default("admin12345"),
 });
 
 const parsed = envSchema.safeParse(process.env);
