@@ -15,6 +15,8 @@ const envSchema = z.object({
   AWS_S3_BUCKET: z.string().optional(),
   AWS_ACCESS_KEY_ID: z.string().optional(),
   AWS_SECRET_ACCESS_KEY: z.string().optional(),
+  // Endpoint S3-compatible (ej. RustFS/MinIO en local). Si no se define, se usa AWS S3 real.
+  AWS_S3_ENDPOINT: z.string().optional(),
   LOCAL_STORAGE_PATH: z.string().default("./uploads"),
 });
 

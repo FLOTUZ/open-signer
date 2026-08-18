@@ -19,9 +19,35 @@ services:
       - ${SAT_CERTS_HOST_DIR:-./certs/sat}:/app/certs/sat:ro
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    depends_on:
+      - rustfs
     # Límite de recursos para evitar ataques de denegación de servicio (DDoS) que tiren el host
     deploy:
       resources:
         limits:
           cpus: '1.0'
           memory: 512M
+
+  # Almacenamiento local S3-compatible (reemplaza a AWS S3 en desarrollo).
+  # Consola web en http://localhost:${RUSTFS_CONSOLE_PORT:-9011} — crea ahí el bucket
+  # definido en AWS_S3_BUCKET la primera vez (RustFS no crea buckets automáticamente).
+  # Puertos de host configurables por si ya corres otra instancia de RustFS en la máquina.
+  rustfs:
+    image: rustfs/rustfs:latest
+    container_name: opensigner_rustfs
+    restart: unless-stopped
+    command: ["/data"]
+    environment:
+      - RUSTFS_ACCESS_KEY=${AWS_ACCESS_KEY_ID:-rustfsadmin}
+      - RUSTFS_SECRET_KEY=${AWS_SECRET_ACCESS_KEY:-rustfsadmin}
+      - RUSTFS_ADDRESS=:9000
+      - RUSTFS_CONSOLE_ADDRESS=:9001
+      - RUSTFS_CONSOLE_ENABLE=true
+    ports:
+      - "${RUSTFS_PORT:-9010}:9000"
+      - "${RUSTFS_CONSOLE_PORT:-9011}:9001"
+    volumes:
+      - rustfs_data:/data
+
+volumes:
+  rustfs_data:

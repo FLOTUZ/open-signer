@@ -20,6 +20,8 @@ export class S3StorageService {
       const config: {
         region?: string;
         credentials?: { accessKeyId: string; secretAccessKey: string };
+        endpoint?: string;
+        forcePathStyle?: boolean;
       } = {};
 
       if (env.AWS_REGION) {
@@ -33,9 +35,27 @@ export class S3StorageService {
         };
       }
 
+      // Endpoint S3-compatible (RustFS/MinIO en local). Requiere direccionamiento
+      // "path-style" (bucket como parte de la ruta) en lugar del "virtual-hosted"
+      // que usa AWS por defecto.
+      if (env.AWS_S3_ENDPOINT) {
+        config.endpoint = env.AWS_S3_ENDPOINT;
+        config.forcePathStyle = true;
+        config.region = config.region || "us-east-1";
+      }
+
       this.s3Client = new S3Client(config);
     }
     return this.s3Client;
+  }
+
+  private static buildObjectUrl(key: string): string {
+    if (env.AWS_S3_ENDPOINT) {
+      // Path-style: http://endpoint/bucket/key
+      return `${env.AWS_S3_ENDPOINT.replace(/\/$/, "")}/${env.AWS_S3_BUCKET}/${key}`;
+    }
+    const region = env.AWS_REGION || "us-east-1";
+    return `https://${env.AWS_S3_BUCKET}.s3.${region}.amazonaws.com/${key}`;
   }
 
   public static extractKey(url: string): string {
@@ -45,8 +65,12 @@ export class S3StorageService {
     // Para URLs de S3: https://bucket.s3.region.amazonaws.com/key (key puede tener slashes)
     try {
       const parsed = new URL(url);
-      // Quitar el primer slash
-      return parsed.pathname.substring(1);
+      let key = parsed.pathname.substring(1);
+      // Path-style (RustFS/MinIO): la ruta viene prefijada con el nombre del bucket
+      if (env.AWS_S3_BUCKET && key.startsWith(`${env.AWS_S3_BUCKET}/`)) {
+        key = key.substring(env.AWS_S3_BUCKET.length + 1);
+      }
+      return key;
     } catch {
       const parts = url.split("/");
       return parts.slice(3).join("/");
@@ -154,8 +178,7 @@ export class S3StorageService {
 
         await client.send(command);
 
-        const region = env.AWS_REGION || "us-east-1";
-        resultUrl = `https://${env.AWS_S3_BUCKET}.s3.${region}.amazonaws.com/${cleanFileName}`;
+        resultUrl = this.buildObjectUrl(cleanFileName);
         isS3 = true;
       } catch (error) {
         console.error(
@@ -231,8 +254,7 @@ export class S3StorageService {
 
         await client.send(command);
 
-        const region = env.AWS_REGION || "us-east-1";
-        resultUrl = `https://${env.AWS_S3_BUCKET}.s3.${region}.amazonaws.com/${key}`;
+        resultUrl = this.buildObjectUrl(key);
         isS3 = true;
       } catch (error) {
         console.error(

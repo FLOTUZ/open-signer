@@ -242,11 +242,26 @@ Si la base de datos de usuarios está vacía, al intentar iniciar sesión en el 
 
 ---
 
-## 6. Configuración de AWS S3 (Almacenamiento en Producción)
+## 6. Configuración de Almacenamiento S3-compatible
 
-Por defecto el sistema guarda documentos en `./uploads` (fallback local). Para activar S3 en producción, sigue estos pasos.
+Por defecto el sistema guarda documentos en `./uploads` (fallback local). El backend usa el SDK de AWS S3, por lo que funciona tanto con AWS S3 real (producción) como con cualquier servicio S3-compatible (desarrollo local).
 
-### 6.1 Crear el Bucket S3
+### 6.1 Desarrollo local con RustFS
+
+`docker compose up --build` levanta también un contenedor **RustFS** (`rustfs/rustfs`, servicio `rustfs` en [docker-compose.yml](docker-compose.yml)), un almacenamiento S3-compatible que reemplaza a AWS S3 en local:
+
+1. Configura en tu `.env` (ver [.env.example](.env.example)): `AWS_S3_ENDPOINT=http://rustfs:9000`, `AWS_S3_BUCKET`, `AWS_ACCESS_KEY_ID` y `AWS_SECRET_ACCESS_KEY` (estas dos últimas también son las credenciales root del contenedor RustFS). Si ya tienes otra instancia de RustFS/MinIO usando los puertos 9010/9011 en tu máquina, cambia `RUSTFS_PORT`/`RUSTFS_CONSOLE_PORT`.
+2. Levanta los contenedores con `docker compose up --build`.
+3. Entra a la consola de RustFS en `http://localhost:9011` (o el `RUSTFS_CONSOLE_PORT` que hayas configurado) con esas credenciales y crea el bucket indicado en `AWS_S3_BUCKET` (RustFS no crea buckets automáticamente).
+4. Listo — el backend subirá y descargará documentos contra RustFS exactamente igual que lo haría contra AWS S3.
+
+*(Si dejas `AWS_S3_ENDPOINT` vacío, o directamente no defines las variables de S3, el sistema vuelve a usar `./uploads` como almacenamiento local.)*
+
+### 6.2 Producción con AWS S3 real
+
+Para producción, deja `AWS_S3_ENDPOINT` vacío y sigue estos pasos para crear el bucket en AWS.
+
+#### 6.2.1 Crear el Bucket S3
 
 1. Abre la [Consola de AWS → S3](https://s3.console.aws.amazon.com/s3/).
 2. Haz clic en **Create bucket**.
@@ -258,7 +273,7 @@ Por defecto el sistema guarda documentos en `./uploads` (fallback local). Para a
    - **Server-side encryption:** Activar **SSE-S3** o **SSE-KMS** según tu política de seguridad.
 4. Haz clic en **Create bucket**.
 
-### 6.2 Crear Usuario IAM con acceso mínimo
+#### 6.2.2 Crear Usuario IAM con acceso mínimo
 
 > [!CAUTION]
 > Nunca uses las credenciales raíz (`root`) de tu cuenta AWS. Crea un usuario IAM con permisos mínimos.
@@ -291,7 +306,7 @@ Por defecto el sistema guarda documentos en `./uploads` (fallback local). Para a
 5. Selecciona el caso de uso **Application running outside AWS**.
 6. Guarda el `Access Key ID` y el `Secret Access Key` — **se muestran una sola vez**.
 
-### 6.3 Configurar Variables de Entorno
+#### 6.2.3 Configurar Variables de Entorno
 
 Edita tu `.env` con los datos obtenidos en los pasos anteriores:
 
@@ -306,16 +321,17 @@ JWT_SECRET=una-clave-larga-y-aleatoria-para-tokens
 > [!IMPORTANT]
 > El archivo `.env` está en `.gitignore`. **Nunca lo subas a un repositorio.** En producción (EC2, ECS, etc.) inyecta estas variables como variables de entorno del sistema operativo o a través de AWS Secrets Manager.
 
-### 6.4 Comportamiento según configuración
+#### 6.2.4 Comportamiento según configuración
 
-| Variable `AWS_S3_BUCKET` | Almacenamiento | URL de descarga |
+| Variables `AWS_S3_BUCKET` / `AWS_S3_ENDPOINT` | Almacenamiento | URL de descarga |
 |---|---|---|
-| **Vacía** (desarrollo) | Sistema de archivos local `./uploads` | Token HMAC interno con TTL 15 min vía `/api/v1/documents/local-download` |
-| **Configurada** (producción) | AWS S3 (bucket privado) | Presigned URL nativa de AWS con TTL 15 min |
+| Ambas vacías | Sistema de archivos local `./uploads` | Token HMAC interno con TTL 15 min vía `/api/v1/documents/local-download` |
+| `AWS_S3_BUCKET` configurada + `AWS_S3_ENDPOINT` configurada | RustFS/S3-compatible (típico en desarrollo local) | Presigned URL (path-style) con TTL 15 min |
+| `AWS_S3_BUCKET` configurada + `AWS_S3_ENDPOINT` vacía | AWS S3 real (bucket privado, producción) | Presigned URL nativa de AWS con TTL 15 min |
 
 En ambos casos el endpoint `GET /api/v1/documents/:documentId/download-url` devuelve la URL temporal correcta automáticamente.
 
-### 6.5 Ejecutar migraciones en producción
+#### 6.2.5 Ejecutar migraciones en producción
 
 ```bash
 # Desde el host (con la URL de RDS en .env):
