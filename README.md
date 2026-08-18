@@ -203,24 +203,17 @@ Para iniciar el Backend y el Frontend en contenedores Docker leyendo la configur
    docker compose up --build
    ```
 
-Esto levantará:
-*   **Backend:** Disponible en `http://localhost:5000` (conectado a tu base de datos externa).
-*   **Frontend (React Nginx):** Disponible en `http://localhost:5001`.
+Esto levantará un único contenedor (`app`) que sirve tanto la API como la SPA compilada del frontend en `http://localhost:5000` (conectado a tu base de datos externa). El Swagger UI queda disponible en `http://localhost:5000/docs`.
 
 ### 3.4 Ejecutar usando GitHub Container Registry (GHCR)
 
-Si prefieres no compilar las imágenes localmente (y por lo tanto no necesitas el código fuente ni Node.js), puedes descargar y ejecutar directamente las imágenes públicas pre-compiladas desde el Container Registry. 
+Si prefieres no compilar la imagen localmente (y por lo tanto no necesitas el código fuente ni Node.js), puedes descargar y ejecutar directamente la imagen pública pre-compilada desde el Container Registry.
 
 ```bash
-# Backend
-docker run -d --name opensigner-backend -p 5000:5000 \
+docker run -d --name opensigner-app -p 5000:5000 \
   --env-file .env \
   -v /etc/sat-certs:/app/certs/sat \
-  ghcr.io/flotuz/opensigner-backend:latest
-
-# Frontend
-docker run -d --name opensigner-frontend -p 5001:80 \
-  ghcr.io/flotuz/opensigner-frontend:latest
+  ghcr.io/flotuz/opensigner:latest
 ```
 
 *(Asegúrate de haber configurado tu archivo `.env` y el directorio de certificados en el host como se menciona en los pasos anteriores).*
@@ -241,7 +234,7 @@ Si la base de datos de usuarios está vacía, al intentar iniciar sesión en el 
 
 ## 5. Documentación y Flujo de Uso
 
-1.  **Login de Super Admin:** Inicia sesión como `admin@opensigner.com` en `http://localhost:5001` y crea una cuenta de cliente (ej. `cliente@opensigner.com`).
+1.  **Login de Super Admin:** Inicia sesión como `admin@opensigner.com` en `http://localhost:5000` y crea una cuenta de cliente (ej. `cliente@opensigner.com`).
 2.  **Dashboard del Cliente:** Inicia sesión con la cuenta de cliente creada, haz clic en **Generar Nueva API Key** y guárdala.
 3.  **Integración Externa (Firmar):** Utiliza la API Key en el header `x-api-key` enviando una petición HTTP Multipart a `/api/v1/signatures/sign` con tu certificado `.cer`, clave `.key`, clave de firma y el documento.
 4.  **Bitácora de Auditoría:** Toda acción mutante quedará registrada para que el Super Admin la monitoree desde su panel.
@@ -362,22 +355,21 @@ DATABASE_URL="postgresql://user:pass@rds-endpoint:5432/dbname?schema=public" \
 
 Dokploy es un gestor de despliegue auto-hospedado basado en Docker. Para este proyecto, el flujo de producción recomendado compila las imágenes Docker mediante **GitHub Actions**, las publica en **GitHub Container Registry (GHCR)** y luego le notifica a **Dokploy** para que redespliegue utilizando las nuevas imágenes.
 
-### 8.1 Registrar las aplicaciones en Dokploy (Usando Docker Registry)
+### 8.1 Registrar la aplicación en Dokploy (Usando Docker Registry)
 
-Dado que las imágenes se construyen y suben a GHCR de forma externa, en Dokploy debes registrar el Backend y el Frontend apuntando a tu registro:
+Dado que la imagen se construye y sube a GHCR de forma externa, en Dokploy debes registrar una única aplicación apuntando a tu registro:
 
-#### 1. Registrar el Backend (API) en Dokploy
 1. En tu panel de Dokploy, crea una aplicación de tipo **Application**.
 2. En la sección de configuración de origen, selecciona **Docker Registry** (en lugar de GitHub/Git).
 3. Configura:
    - **Registry**: GitHub Container Registry (`ghcr.io`).
-   - **Image**: `ghcr.io/flotuz/opensigner-backend:latest` (o tu usuario si hiciste un fork).
+   - **Image**: `ghcr.io/flotuz/opensigner:latest` (o tu usuario si hiciste un fork).
 4. En la pestaña **Environment**, define las variables necesarias (`DATABASE_URL`, `JWT_SECRET`, `PORT=5000`, etc.).
 5. En la pestaña **Advanced**, en la sección de Volúmenes (Bind Mounts), agrega la ruta de los certificados:
    - **Host Path**: `/etc/sat-certs`
    - **Mount Path**: `/app/certs/sat`
    *(Sin este volumen, el contenedor fallará al arrancar por seguridad).*
-6. Asigna tu dominio (ej. `api.tudominio.com`) al puerto expuesto por el contenedor (`5000`).
+6. Asigna tu dominio (ej. `tudominio.com`) al puerto expuesto por el contenedor (`5000`). Este único puerto sirve tanto la API (`/api/v1`, `/docs`) como la SPA del frontend.
 7. Entrar vía SSH a tu servidor (VPS) e instalar manualmente los certificados descargando el script:
 ```bash
 sudo apt-get update && sudo apt-get install -y unzip curl wget
@@ -386,14 +378,6 @@ chmod +x install-sat-certs.sh
 sudo ./install-sat-certs.sh -y
 ```
 *(Este script descargará, verificará e instalará los certificados en `/etc/sat-certs` automáticamente, preparándolos para que el contenedor los copie al iniciar).*
-
-#### 2. Registrar el Frontend (Nginx SPA) en Dokploy
-1. Crea otra aplicación de tipo **Application** en Dokploy.
-2. En origen, selecciona **Docker Registry**.
-3. Configura:
-   - **Registry**: GitHub Container Registry (`ghcr.io`).
-   - **Image**: `ghcr.io/TU_USUARIO_DE_GITHUB/opensigner-frontend:latest`
-4. Asigna tu dominio público (ej. `firma.tudominio.com`) al puerto `80` (puerto estándar de Nginx que sirve la SPA).
 
 ---
 
@@ -404,18 +388,17 @@ El repositorio cuenta con un pipeline automatizado en `.github/workflows/deploy.
 ### Pasos de Configuración:
 
 1. **Obtener el Webhook de despliegue en Dokploy**:
-   - En tu panel de Dokploy, ve a cada una de tus aplicaciones creadas (Backend y Frontend).
+   - En tu panel de Dokploy, ve a la aplicación creada.
    - Ve a la pestaña **Deployments** o **Settings** y copia el **Deploy Webhook URL**.
-   - Si deseas redesplegar ambas a la vez, puedes usar el webhook de la aplicación principal o crear un webhook multicanal en tu Dokploy.
 2. **Configurar Secretos en tu Repositorio de GitHub**:
    - Ve a tu repositorio en GitHub → **Settings** → **Secrets and variables** → **Actions**.
    - Agrega los siguientes secretos:
      - `DOKPLOY_WEBHOOK_URL`: Pega la URL del webhook de Dokploy (para notificar del redespliegue).
-     - `VITE_API_URL`: Configura el endpoint de API de producción (ej. `https://api.tudominio.com/api/v1`). Este valor se inyecta como `build-arg` durante la compilación de la imagen de Docker del Frontend para que la SPA consuma el endpoint correcto.
+     - `VITE_API_URL` *(opcional)*: Por defecto la SPA usa la ruta relativa `/api/v1`, ya que el frontend y la API se sirven desde el mismo origen/contenedor. Solo defínelo si necesitas apuntar a un dominio de API distinto.
 3. **Funcionamiento del Pipeline**:
-   - Al hacer `git push` a `main`:
+   - Al hacer `git push` a `master`:
      1. Se validan e instalan las dependencias locales.
      2. Se ejecuta la validación de compilación tanto del backend como del frontend.
      3. GitHub Actions inicia sesión en **GHCR** usando el token nativo `${{ secrets.GITHUB_TOKEN }}`.
-     4. Construye y empuja las imágenes `opensigner-backend` e `opensigner-frontend` taggeadas como `latest`.
-     5. Realiza un POST al webhook de Dokploy (`DOKPLOY_WEBHOOK_URL`), indicándole al servidor VPS que descargue las nuevas imágenes de GHCR y las redespliegue inmediatamente.
+     4. Construye y empuja una única imagen `opensigner` (backend + frontend compilado) taggeada como `latest`.
+     5. Realiza un POST al webhook de Dokploy (`DOKPLOY_WEBHOOK_URL`), indicándole al servidor VPS que descargue la nueva imagen de GHCR y la redespliegue inmediatamente.

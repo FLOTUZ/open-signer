@@ -1,5 +1,21 @@
-# ─── FASE 1: BUILDER ───────────────────────────────────────────────
-FROM node:20-alpine AS builder
+# ─── FASE 1: FRONTEND BUILDER ──────────────────────────────────────
+FROM node:20-alpine AS frontend-builder
+
+WORKDIR /app/frontend
+
+COPY frontend/package*.json ./
+RUN npm ci
+
+COPY frontend/ ./
+
+# La app se sirve desde el mismo origen que la API, por lo que la ruta
+# puede ser relativa salvo que se necesite apuntar a otro dominio.
+ARG VITE_API_URL=/api/v1
+ENV VITE_API_URL=$VITE_API_URL
+RUN npm run build
+
+# ─── FASE 2: BACKEND BUILDER ───────────────────────────────────────
+FROM node:20-alpine AS backend-builder
 
 WORKDIR /app
 
@@ -17,7 +33,7 @@ COPY src ./src
 COPY public ./public
 RUN npm run build
 
-# ─── FASE 2: RUNNER (PRODUCCIÓN REAL) ──────────────────────────────
+# ─── FASE 3: RUNNER (PRODUCCIÓN REAL) ──────────────────────────────
 FROM node:20-alpine AS runner
 
 # Etiqueta para vincular la imagen al repositorio en GitHub Container Registry
@@ -33,13 +49,16 @@ WORKDIR /app
 RUN chown -R node:node /app
 USER node
 
-# Copiar SOLO los artefactos necesarios desde la fase builder
-COPY --from=builder --chown=node:node /app/package*.json ./
+# Copiar SOLO los artefactos necesarios desde la fase builder del backend
+COPY --from=backend-builder --chown=node:node /app/package*.json ./
 # En un entorno estricto, aquí harías 'npm ci --omit=dev', pero usaremos el node_modules generado si Prisma lo requiere
-COPY --from=builder --chown=node:node /app/node_modules ./node_modules
-COPY --from=builder --chown=node:node /app/dist ./dist
-COPY --from=builder --chown=node:node /app/prisma ./prisma
-COPY --from=builder --chown=node:node /app/public ./public
+COPY --from=backend-builder --chown=node:node /app/node_modules ./node_modules
+COPY --from=backend-builder --chown=node:node /app/dist ./dist
+COPY --from=backend-builder --chown=node:node /app/prisma ./prisma
+COPY --from=backend-builder --chown=node:node /app/public ./public
+
+# Copiar el build estático del frontend, servido directamente por Express
+COPY --from=frontend-builder --chown=node:node /app/frontend/dist ./frontend-dist
 
 # Crear directorio de uploads con los permisos del usuario sin privilegios
 RUN mkdir -p uploads

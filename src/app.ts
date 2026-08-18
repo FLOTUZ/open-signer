@@ -39,7 +39,23 @@ app.get('/health', (_req, res) => {
   });
 });
 
-// 6. Manejador Centralizado de Errores (Zod, AppError, etc.)
+// 6. Servir el frontend (SPA) compilado, junto al backend en el mismo contenedor
+const frontendDistPath = path.resolve(__dirname, '../frontend-dist');
+app.use(express.static(frontendDistPath));
+app.get(/.*/, (req, res, next) => {
+  if (
+    req.path.startsWith('/api') ||
+    req.path.startsWith('/docs') ||
+    req.path.startsWith('/uploads') ||
+    req.path.startsWith('/public') ||
+    req.path === '/health'
+  ) {
+    return next();
+  }
+  res.sendFile(path.join(frontendDistPath, 'index.html'));
+});
+
+// 7. Manejador Centralizado de Errores (Zod, AppError, etc.)
 app.use(errorHandler);
 
 export default app;

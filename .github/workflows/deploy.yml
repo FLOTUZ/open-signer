@@ -57,27 +57,16 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      # 1. Construcción y subida de la imagen del Backend (API)
-      - name: Build and push Backend Docker image
+      # Construcción y subida de la imagen única (backend + frontend servidos juntos)
+      - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
           context: .
           file: ./Dockerfile
           push: true
-          tags: ghcr.io/${{ env.OWNER_LC }}/opensigner-backend:latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-      # 2. Construcción y subida de la imagen del Frontend (Web)
-      - name: Build and push Frontend Docker image
-        uses: docker/build-push-action@v5
-        with:
-          context: ./frontend
-          file: ./frontend/Dockerfile
-          push: true
           build-args: |
-            VITE_API_URL=${{ secrets.VITE_API_URL }}
-          tags: ghcr.io/${{ env.OWNER_LC }}/opensigner-frontend:latest
+            VITE_API_URL=${{ secrets.VITE_API_URL || '/api/v1' }}
+          tags: ghcr.io/${{ env.OWNER_LC }}/opensigner:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
 

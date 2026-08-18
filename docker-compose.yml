@@ -1,7 +1,10 @@
 services:
-  backend:
-    build: .
-    container_name: opensigner_backend
+  app:
+    build:
+      context: .
+      args:
+        - VITE_API_URL=${VITE_API_URL:-/api/v1}
+    container_name: opensigner_app
     env_file:
       - .env
     environment:
@@ -22,14 +25,3 @@ services:
         limits:
           cpus: '1.0'
           memory: 512M
-
-  frontend:
-    build:
-      context: ./frontend
-      args:
-        - VITE_API_URL=${VITE_API_URL}
-    container_name: opensigner_frontend
-    ports:
-      - "5001:80"
-    depends_on:
-      - backend
