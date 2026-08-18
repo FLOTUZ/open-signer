@@ -4,6 +4,7 @@ import { prisma } from "./config/db";
 import fs from "fs";
 import path from "path";
 import { SatSignatureService } from "./services/SatSignatureService";
+import { S3StorageService } from "./services/S3StorageService";
 import { startWebhookWorker } from "./services/WebhookWorker";
 import { CrlWorkerService } from "./services/CrlWorkerService";
 
@@ -55,46 +56,79 @@ function bootstrapCryptoRoots() {
   }
 }
 
-// Ejecutar la validación criptográfica ANTES de abrir el puerto
-bootstrapCryptoRoots();
+// ─── BLOQUEO DE ARRANQUE: Conexión a Base de Datos ───
+async function bootstrapDatabase() {
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+    console.log("[🗄️ DB] Conexión a la base de datos verificada.");
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : String(error);
+    console.error(
+      `[❌ ERROR CRÍTICO] No se pudo conectar a la base de datos: ${msg}`,
+    );
+    process.exit(1);
+  }
+}
 
-const server = app.listen(env.PORT, () => {
-  const baseUrl = `${env.DOMAIN}`;
+// ─── BLOQUEO DE ARRANQUE: Almacenamiento de Objetos ───
+async function bootstrapObjectStorage() {
+  try {
+    await S3StorageService.testConnection();
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : String(error);
+    console.error(
+      `[❌ ERROR CRÍTICO] No se pudo conectar al almacenamiento de objetos: ${msg}`,
+    );
+    process.exit(1);
+  }
+}
 
-  console.log(`🚀 Servidor ejecutándose en ${baseUrl}`);
-  console.log(`📄 Documentación API disponible en ${baseUrl}/docs`);
-  // Iniciar el worker de webhooks integrado en el proceso principal
-  startWebhookWorker();
+async function bootstrap() {
+  // Ejecutar todas las validaciones ANTES de abrir el puerto
+  bootstrapCryptoRoots();
+  await bootstrapDatabase();
+  await bootstrapObjectStorage();
 
-  // Iniciar el worker de sincronización de CRL (Listas de Revocación)
-  CrlWorkerService.start();
-});
+  const server = app.listen(env.PORT, () => {
+    const baseUrl = `${env.DOMAIN}`;
 
-const gracefulShutdown = async (signal: string) => {
-  console.log(
-    `\n⚠️ Recibido ${signal}. Cerrando el servidor de forma ordenada...`,
-  );
+    console.log(`🚀 Servidor ejecutándose en ${baseUrl}`);
+    console.log(`📄 Documentación API disponible en ${baseUrl}/docs`);
+    // Iniciar el worker de webhooks integrado en el proceso principal
+    startWebhookWorker();
 
-  server.close(async () => {
-    console.log("💤 Servidor HTTP cerrado.");
-    try {
-      await prisma.$disconnect();
-      console.log("🔌 Conexión a base de datos (Prisma) cerrada.");
-      process.exit(0);
-    } catch (error) {
-      console.error("❌ Error al desconectar base de datos:", error);
-      process.exit(1);
-    }
+    // Iniciar el worker de sincronización de CRL (Listas de Revocación)
+    CrlWorkerService.start();
   });
 
-  setTimeout(() => {
-    console.error("💥 Forzando apagado del sistema.");
-    process.exit(1);
-  }, 10000);
-};
+  const gracefulShutdown = async (signal: string) => {
+    console.log(
+      `\n⚠️ Recibido ${signal}. Cerrando el servidor de forma ordenada...`,
+    );
 
-process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
-process.on("SIGINT", () => gracefulShutdown("SIGINT"));
+    server.close(async () => {
+      console.log("💤 Servidor HTTP cerrado.");
+      try {
+        await prisma.$disconnect();
+        console.log("🔌 Conexión a base de datos (Prisma) cerrada.");
+        process.exit(0);
+      } catch (error) {
+        console.error("❌ Error al desconectar base de datos:", error);
+        process.exit(1);
+      }
+    });
+
+    setTimeout(() => {
+      console.error("💥 Forzando apagado del sistema.");
+      process.exit(1);
+    }, 10000);
+  };
+
+  process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
+  process.on("SIGINT", () => gracefulShutdown("SIGINT"));
+}
+
+bootstrap();
 
 process.on("uncaughtException", (error) => {
   console.error("💥 UNCAUGHT EXCEPTION! Apagando...", error);

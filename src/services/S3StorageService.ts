@@ -5,6 +5,7 @@ import {
   S3Client,
   PutObjectCommand,
   GetObjectCommand,
+  HeadBucketCommand,
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { env } from "../config/env";
@@ -56,6 +57,29 @@ export class S3StorageService {
     }
     const region = env.AWS_REGION || "us-east-1";
     return `https://${env.AWS_S3_BUCKET}.s3.${region}.amazonaws.com/${key}`;
+  }
+
+  /**
+   * Verifica que el almacenamiento de objetos configurado sea alcanzable.
+   * Si no hay bucket configurado, el sistema usa almacenamiento local y no hay nada que probar.
+   */
+  public static async testConnection(): Promise<void> {
+    if (!env.AWS_S3_BUCKET) {
+      console.log(
+        `[📦 STORAGE] Sin bucket S3 configurado — usando almacenamiento local en "${env.LOCAL_STORAGE_PATH}".`,
+      );
+      return;
+    }
+
+    const client = this.getS3Client();
+    await client.send(new HeadBucketCommand({ Bucket: env.AWS_S3_BUCKET }));
+
+    const backend = env.AWS_S3_ENDPOINT
+      ? `S3-compatible (${env.AWS_S3_ENDPOINT})`
+      : "AWS S3";
+    console.log(
+      `[📦 STORAGE] Conexión verificada — ${backend}, bucket "${env.AWS_S3_BUCKET}".`,
+    );
   }
 
   public static extractKey(url: string): string {
