@@ -6,6 +6,7 @@ import {
   PutObjectCommand,
   GetObjectCommand,
   HeadBucketCommand,
+  CreateBucketCommand,
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { env } from "../config/env";
@@ -72,7 +73,26 @@ export class S3StorageService {
     }
 
     const client = this.getS3Client();
-    await client.send(new HeadBucketCommand({ Bucket: env.AWS_S3_BUCKET }));
+
+    try {
+      await client.send(new HeadBucketCommand({ Bucket: env.AWS_S3_BUCKET }));
+    } catch (error) {
+      const statusCode = (error as { $metadata?: { httpStatusCode?: number } })
+        ?.$metadata?.httpStatusCode;
+      const bucketMissing = statusCode === 404 || statusCode === 403;
+
+      // Solo auto-creamos el bucket contra un endpoint S3-compatible local
+      // (RustFS/MinIO). Contra AWS S3 real un 403 casi siempre es un tema de
+      // permisos IAM, no de bucket inexistente, así que ahí preferimos fallar.
+      if (!env.AWS_S3_ENDPOINT || !bucketMissing) {
+        throw error;
+      }
+
+      console.log(
+        `[📦 STORAGE] Bucket "${env.AWS_S3_BUCKET}" no existe en ${env.AWS_S3_ENDPOINT} — creándolo...`,
+      );
+      await client.send(new CreateBucketCommand({ Bucket: env.AWS_S3_BUCKET }));
+    }
 
     const backend = env.AWS_S3_ENDPOINT
       ? `S3-compatible (${env.AWS_S3_ENDPOINT})`
