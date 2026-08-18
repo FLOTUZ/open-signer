@@ -79,6 +79,7 @@ async function bootstrapObjectStorage() {
     console.error(
       `[❌ ERROR CRÍTICO] No se pudo conectar al almacenamiento de objetos: ${msg}`,
     );
+    console.log(error);
     process.exit(1);
   }
 }
