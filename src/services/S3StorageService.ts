@@ -16,39 +16,63 @@ const HMAC_SECRET = () => env.JWT_SECRET;
 
 export class S3StorageService {
   private static s3Client: S3Client | null = null;
+  private static presignClient: S3Client | null = null;
+
+  private static buildClientConfig(endpoint?: string): {
+    region?: string;
+    credentials?: { accessKeyId: string; secretAccessKey: string };
+    endpoint?: string;
+    forcePathStyle?: boolean;
+  } {
+    const config: {
+      region?: string;
+      credentials?: { accessKeyId: string; secretAccessKey: string };
+      endpoint?: string;
+      forcePathStyle?: boolean;
+    } = {};
+
+    if (env.AWS_REGION) {
+      config.region = env.AWS_REGION;
+    }
+
+    if (env.AWS_ACCESS_KEY_ID && env.AWS_SECRET_ACCESS_KEY) {
+      config.credentials = {
+        accessKeyId: env.AWS_ACCESS_KEY_ID,
+        secretAccessKey: env.AWS_SECRET_ACCESS_KEY,
+      };
+    }
+
+    // Endpoint S3-compatible (RustFS/MinIO en local). Requiere direccionamiento
+    // "path-style" (bucket como parte de la ruta) en lugar del "virtual-hosted"
+    // que usa AWS por defecto.
+    if (endpoint) {
+      config.endpoint = endpoint;
+      config.forcePathStyle = true;
+      config.region = config.region || "us-east-1";
+    }
+
+    return config;
+  }
 
   private static getS3Client(): S3Client {
     if (!this.s3Client) {
-      const config: {
-        region?: string;
-        credentials?: { accessKeyId: string; secretAccessKey: string };
-        endpoint?: string;
-        forcePathStyle?: boolean;
-      } = {};
-
-      if (env.AWS_REGION) {
-        config.region = env.AWS_REGION;
-      }
-
-      if (env.AWS_ACCESS_KEY_ID && env.AWS_SECRET_ACCESS_KEY) {
-        config.credentials = {
-          accessKeyId: env.AWS_ACCESS_KEY_ID,
-          secretAccessKey: env.AWS_SECRET_ACCESS_KEY,
-        };
-      }
-
-      // Endpoint S3-compatible (RustFS/MinIO en local). Requiere direccionamiento
-      // "path-style" (bucket como parte de la ruta) en lugar del "virtual-hosted"
-      // que usa AWS por defecto.
-      if (env.AWS_S3_ENDPOINT) {
-        config.endpoint = env.AWS_S3_ENDPOINT;
-        config.forcePathStyle = true;
-        config.region = config.region || "us-east-1";
-      }
-
-      this.s3Client = new S3Client(config);
+      this.s3Client = new S3Client(this.buildClientConfig(env.AWS_S3_ENDPOINT));
     }
     return this.s3Client;
+  }
+
+  /**
+   * Cliente usado únicamente para firmar presigned URLs que consumirá el
+   * navegador del usuario final. Usa AWS_S3_PUBLIC_ENDPOINT (ej.
+   * http://localhost:9010) en vez de AWS_S3_ENDPOINT (ej. http://rustfs:9000,
+   * un hostname interno de Docker que el navegador no puede resolver).
+   */
+  private static getPresignClient(): S3Client {
+    const publicEndpoint = env.AWS_S3_PUBLIC_ENDPOINT || env.AWS_S3_ENDPOINT;
+    if (!this.presignClient) {
+      this.presignClient = new S3Client(this.buildClientConfig(publicEndpoint));
+    }
+    return this.presignClient;
   }
 
   private static buildObjectUrl(key: string): string {
@@ -138,7 +162,7 @@ export class S3StorageService {
 
     if (!isLocal) {
       // Modo S3 real: presigned URL nativa de AWS
-      const client = this.getS3Client();
+      const client = this.getPresignClient();
       const command = new GetObjectCommand({
         Bucket: env.AWS_S3_BUCKET,
         Key: key,
