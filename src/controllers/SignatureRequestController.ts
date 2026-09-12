@@ -287,9 +287,17 @@ export class SignatureRequestController {
       }
 
       // 2. Validar el certificado .cer contra la cadena de confianza del SAT
+      //
+      // Se le pasa una COPIA (no `cerBuffer`) porque validateCertificate() hace
+      // fill(0) sobre el buffer recibido en su finally para no retener datos
+      // sensibles en memoria — como los Buffer de Node se pasan por referencia,
+      // pasarle `cerBuffer` directamente lo dejaría en ceros para el resto de
+      // este método (ver el mismo patrón en CertificateController.ts), rompiendo
+      // la verificación criptográfica de la firma en el paso 2.5.
       cerBuffer = Buffer.from(cerBase64, "base64");
-      const certValidation =
-        await SatSignatureService.validateCertificate(cerBuffer);
+      const certValidation = await SatSignatureService.validateCertificate(
+        Buffer.from(cerBuffer),
+      );
 
       if (certValidation.resultado === "RECHAZADO") {
         throw new AppError(
