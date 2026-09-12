@@ -550,6 +550,9 @@ export default function SignPage({ requestId: propRequestId }: SignPageProps) {
                         onChange={(e) => setPassword(e.target.value)}
                         onKeyDown={(e) => e.key === "Enter" && handleSign()}
                         autoComplete="off"
+                        autoCorrect="off"
+                        autoCapitalize="off"
+                        spellCheck={false}
                       />
                       <button
                         type="button"
