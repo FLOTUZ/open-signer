@@ -302,7 +302,7 @@ export class SignatureRequestController {
         certValidation.metadata;
 
       if (
-        env.SIGNATURE_ENFORCE_RFC_MATCH &&
+        env.NODE_ENV === "production" &&
         titular_rfc !== signatureRequest.requestedRfc
       ) {
         throw new AppError(

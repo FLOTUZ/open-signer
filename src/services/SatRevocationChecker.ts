@@ -98,41 +98,7 @@ export class SatRevocationChecker {
     cerBuffer: Buffer,
     issuerCerBuffer: Buffer,
   ): Promise<boolean> {
-    const devMode = process.env.SAT_REVOCATION_CHECK_MODE;
-
-    // 1. Manejo del Simulador para Entornos de Desarrollo
-    if (
-      process.env.NODE_ENV !== "production" &&
-      devMode &&
-      devMode !== "production"
-    ) {
-      console.warn(
-        `[⚠️ DEV MODE] Validación de revocación SAT simulada: ${devMode}. NUNCA usar en producción.`,
-      );
-
-      if (devMode === "disabled") return false;
-      if (devMode === "mock_good") {
-        await new Promise((r) => setTimeout(r, 200)); // Retardo artificial
-        return false;
-      }
-      if (devMode === "mock_revoked") {
-        await new Promise((r) => setTimeout(r, 200));
-        return true;
-      }
-      if (devMode === "mock_timeout") {
-        await new Promise((r) => setTimeout(r, 500));
-        console.log(
-          `[⚠️ DEV MODE] Simulando timeout de OCSP. Ejecutando fallback a CRL local...`,
-        );
-        return this.checkCrlFallback(cerBuffer);
-      }
-      if (devMode === "mock_sat_down") {
-        await new Promise((r) => setTimeout(r, 500));
-        throw new Error("Simulación: SAT caído y caché inalcanzable");
-      }
-    }
-
-    // 2. Extracción de URLs (AIA)
+    // 1. Extracción de URLs (AIA)
     let { ocspUrl, crlUrl } = this.extractRevocationUrls(cerBuffer);
 
     // Fallback: Si el certificado final no tiene URLs, buscamos en el certificado del emisor (Root/Intermedio)
@@ -152,7 +118,7 @@ export class SatRevocationChecker {
       await CrlWorkerService.registerCrlUrl(crlUrl);
     }
 
-    // 3. Consulta OCSP en Tiempo Real (Fase 1)
+    // 2. Consulta OCSP en Tiempo Real (Fase 1)
     if (ocspUrl) {
       try {
         // Defensa contra SSRF: la URL de OCSP viene de una extensión del
@@ -180,7 +146,7 @@ export class SatRevocationChecker {
       );
     }
 
-    // 4. Fallback a CRL Local (Fase 2)
+    // 3. Fallback a CRL Local (Fase 2)
     try {
       return await this.checkCrlFallback(cerBuffer);
     } catch (error) {

@@ -11,16 +11,6 @@ import { CrlWorkerService } from "./services/CrlWorkerService";
 // ─── BLOQUEO DE ARRANQUE: Inicialización Criptográfica ───
 function bootstrapCryptoRoots() {
   const certsDir = process.env.SAT_CERTS_DIR || "/app/certs/sat";
-  const envMode = process.env.NODE_ENV;
-  const satMode = process.env.SAT_REVOCATION_CHECK_MODE;
-
-  // 0. Guardia Rígida contra Errores Humanos
-  if (envMode === "production" && satMode && satMode !== "production") {
-    console.error(
-      `[❌ ERROR CRÍTICO] Intentando arrancar en PRODUCCIÓN con simulación de revocación SAT activa (${satMode}). ESTO ES UN RIESGO DE SEGURIDAD.`,
-    );
-    process.exit(1);
-  }
 
   try {
     if (!fs.existsSync(certsDir)) {

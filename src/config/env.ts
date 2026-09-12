@@ -33,17 +33,6 @@ const envSchema = z.object({
   // Credenciales del Super Admin auto-creado en el primer login (DB vacía).
   SUPER_ADMIN_EMAIL: z.string().email().default("admin@opensigner.com"),
   SUPER_ADMIN_PASSWORD: z.string().min(8).default("admin12345"),
-  // ⚠️ Interruptores de seguridad — por defecto SIEMPRE estrictos (true).
-  // Ponerlos en "false" reduce las garantías de identidad de la firma; ver
-  // .env.example para el detalle de qué desactiva cada uno.
-  SIGNATURE_ENFORCE_RFC_MATCH: z
-    .string()
-    .optional()
-    .transform((v) => v !== "false"),
-  SAT_ENFORCE_CERT_CHAIN: z
-    .string()
-    .optional()
-    .transform((v) => v !== "false"),
 });
 
 const parsed = envSchema.safeParse(process.env);
