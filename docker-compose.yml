@@ -29,9 +29,10 @@ services:
           memory: 512M
 
   # Almacenamiento local S3-compatible (reemplaza a AWS S3 en desarrollo).
-  # Consola web en http://localhost:${RUSTFS_CONSOLE_PORT:-9011} — crea ahí el bucket
-  # definido en AWS_S3_BUCKET la primera vez (RustFS no crea buckets automáticamente).
-  # Puertos de host configurables por si ya corres otra instancia de RustFS en la máquina.
+  # Consola web en http://localhost:9011 — crea ahí el bucket definido en
+  # AWS_S3_BUCKET la primera vez (RustFS no crea buckets automáticamente).
+  # En producción, RustFS/MinIO (o AWS S3) debe tener su propia URL asignada
+  # (ver AWS_S3_ENDPOINT en .env.example) — este sidecar es solo para desarrollo.
   rustfs:
     image: rustfs/rustfs:latest
     container_name: opensigner_rustfs
@@ -44,8 +45,8 @@ services:
       - RUSTFS_CONSOLE_ADDRESS=:9001
       - RUSTFS_CONSOLE_ENABLE=true
     ports:
-      - "${RUSTFS_PORT:-9010}:9000"
-      - "${RUSTFS_CONSOLE_PORT:-9011}:9001"
+      - "9010:9000"
+      - "9011:9001"
     volumes:
       - rustfs_data:/data
 

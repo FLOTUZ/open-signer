@@ -253,9 +253,9 @@ Por defecto el sistema guarda documentos en `./uploads` (fallback local). El bac
 
 `docker compose up --build` levanta también un contenedor **RustFS** (`rustfs/rustfs`, servicio `rustfs` en [docker-compose.yml](docker-compose.yml)), un almacenamiento S3-compatible que reemplaza a AWS S3 en local:
 
-1. Configura en tu `.env` (ver [.env.example](.env.example)): `AWS_S3_ENDPOINT=http://rustfs:9000`, `AWS_S3_BUCKET`, `AWS_ACCESS_KEY_ID` y `AWS_SECRET_ACCESS_KEY` (estas dos últimas también son las credenciales root del contenedor RustFS). Si ya tienes otra instancia de RustFS/MinIO usando los puertos 9010/9011 en tu máquina, cambia `RUSTFS_PORT`/`RUSTFS_CONSOLE_PORT`.
+1. Configura en tu `.env` (ver [.env.example](.env.example)): `AWS_S3_ENDPOINT=http://rustfs:9000`, `AWS_S3_BUCKET`, `AWS_ACCESS_KEY_ID` y `AWS_SECRET_ACCESS_KEY` (estas dos últimas también son las credenciales root del contenedor RustFS). Los puertos de host del sidecar RustFS son fijos (`9010` API, `9011` consola, ver [docker-compose.yml](docker-compose.yml)).
 2. Levanta los contenedores con `docker compose up --build`.
-3. Entra a la consola de RustFS en `http://localhost:9011` (o el `RUSTFS_CONSOLE_PORT` que hayas configurado) con esas credenciales y crea el bucket indicado en `AWS_S3_BUCKET` (RustFS no crea buckets automáticamente).
+3. Entra a la consola de RustFS en `http://localhost:9011` con esas credenciales y crea el bucket indicado en `AWS_S3_BUCKET` (RustFS no crea buckets automáticamente).
 4. Listo — el backend subirá y descargará documentos contra RustFS exactamente igual que lo haría contra AWS S3.
 
 *(Si dejas `AWS_S3_ENDPOINT` vacío, o directamente no defines las variables de S3, el sistema vuelve a usar `./uploads` como almacenamiento local.)*
