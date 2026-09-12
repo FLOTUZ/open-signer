@@ -64,19 +64,16 @@ nueva raíz y quieres aplicarla ya). Flujo para ese caso:
    `/etc/sat-certs` automáticamente.
 4. Repites el paso 1 cada vez que el SAT rote sus certificados raíz.
 
-## Variables de Entorno y Simulador de Revocación
-
-Para controlar el comportamiento de la validación del SAT y las listas de revocación, existen dos variables clave en el `.env`:
+## Variables de Entorno
 
 ### 1. `SAT_CERTS_DIR`
 Le indica al backend en qué directorio debe buscar los certificados públicos oficiales del SAT (las llaves Raíz e Intermedias) para construir la "cadena de confianza".
 - **En Producción (Docker):** El contenedor mapea la carpeta local hacia `/app/certs/sat`. Por lo tanto, el valor correcto suele ser `/app/certs/sat` (o puede omitirse, ya que el sistema buscará ahí por defecto).
 
-### 2. `SAT_REVOCATION_CHECK_MODE`
-Actúa como un "Simulador" para pruebas de revocación (OCSP y CRL). Controla si el sistema consulta al SAT real o si finge el resultado (para desarrollo).
-- **En Producción:** Esta variable **DEBE** ser `production` o borrarse del `.env`.
-- **Seguridad (Circuit Breaker):** Si por accidente tu entorno dice `NODE_ENV=production` y `SAT_REVOCATION_CHECK_MODE="mock_good"`, el servidor se apagará instantáneamente (`process.exit(1)`) para evitar que se aprueben firmas con certificados falsos.
-- **Valores posibles:** `production`, `mock_good`, `mock_revoked`, `mock_timeout`, `mock_sat_down`, `disabled`.
+### 2. `NODE_ENV` — interruptor único de estrictez de firma
+Controla, en una sola variable, la procedencia SAT, el match de RFC y la verificación de revocación (OCSP/CRL):
+- **`NODE_ENV=production`:** se exige que el certificado provenga del SAT (cadena de confianza válida), que su RFC coincida con el del firmante, y se verifica revocación en tiempo real. Sin excepciones ni variables adicionales para desactivarlo.
+- **`NODE_ENV=development` o `test`:** se acepta cualquier certificado estructuralmente válido (sea o no del SAT, coincida o no su RFC) y se omite la verificación de revocación. Uso exclusivo para pruebas/demos.
 
 ### Extracción Dinámica de URLs (AIA/CDP) y Errores EAI_AGAIN
 El SAT no tiene una "única URL maestra" para sus listas de revocación. Opera múltiples autoridades certificadoras, y cada certificado emitido tiene incrustada la URL específica donde debe verificarse.

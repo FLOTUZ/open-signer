@@ -6,6 +6,7 @@ import os from 'os';
 import { exec } from 'child_process';
 import util from 'util';
 import { assertPublicHttpUrl } from '../core/security/ssrfGuard';
+import { env } from '../config/env';
 
 const execPromise = util.promisify(exec);
 
@@ -34,8 +35,8 @@ export class CrlWorkerService {
    * Inicializa el Worker que corre cada 12 horas.
    */
   public static start() {
-    if (process.env.NODE_ENV !== 'production' && process.env.SAT_REVOCATION_CHECK_MODE === 'disabled') {
-      console.log("[🔄 CRL Worker] Deshabilitado por configuración DEV.");
+    if (env.NODE_ENV !== 'production') {
+      console.log("[🔄 CRL Worker] Deshabilitado fuera de producción (la revocación no se verifica en desarrollo/pruebas).");
       return;
     }
 

@@ -12,7 +12,7 @@ export interface CertValidationAprobado {
     titular_curp: string | null;
     numero_serie: string;
     valido_hasta: string;
-    revocacion_verificada_via: "OCSP_ONLINE" | "CRL_CACHE_FALLBACK" | "MOCK_DEV" | "SKIPPED_DEV";
+    revocacion_verificada_via: "OCSP_ONLINE" | "CRL_CACHE_FALLBACK" | "SKIPPED_DEV";
     fecha_verificacion: string;
   };
 }
@@ -187,17 +187,14 @@ export class SatSignatureService {
         }
       }
 
-      // Flexibilidad para desarrollo/pruebas, o forzada explícitamente vía
-      // SAT_ENFORCE_CERT_CHAIN=false en el .env (ver .env.example — reduce la
-      // garantía de identidad de la firma: acepta certificados no emitidos por
-      // el SAT, incluso en producción; úsalo con pleno conocimiento del riesgo).
+      // Interruptor único de entorno: NODE_ENV. Fuera de "production" se
+      // acepta cualquier certificado válido estructuralmente, sea o no
+      // emitido por el SAT (ver .env.example).
       const subjectStr = cert.subject || "";
       const issuerStr = cert.issuer || "";
-      const esDesarrollo = process.env.NODE_ENV !== "production";
-      const permitirCualquierCertificado = !env.SAT_ENFORCE_CERT_CHAIN;
-      const omitirCadenaDeConfianza = esDesarrollo || permitirCualquierCertificado;
+      const esDesarrollo = env.NODE_ENV !== "production";
 
-      if (!esCertificadoValidoDelSat && omitirCadenaDeConfianza) {
+      if (!esCertificadoValidoDelSat && esDesarrollo) {
         // 1. Permitimos certificados de prueba autogenerados por Open Signer (auto-firmados)
         const esPruebaOpenSigner =
           subjectStr.includes("Open Signer") ||
@@ -214,15 +211,9 @@ export class SatSignatureService {
         } else {
           // 2. Cualquier certificado válido estructuralmente
           esCertificadoValidoDelSat = true;
-          if (permitirCualquierCertificado && !esDesarrollo) {
-            console.warn(
-              `[🚨 CRIPTO] [SAT_ENFORCE_CERT_CHAIN=false EN PRODUCCIÓN] Omitiendo verificación de emisor del SAT para: ${subjectStr}`,
-            );
-          } else {
-            console.warn(
-              `[⚠️  CRIPTO] [DEV ONLY] Omitiendo verificación estricta de emisor del SAT para: ${subjectStr}`,
-            );
-          }
+          console.warn(
+            `[⚠️  CRIPTO] [DEV ONLY] Omitiendo verificación estricta de emisor del SAT para: ${subjectStr}`,
+          );
         }
       }
 
@@ -289,27 +280,18 @@ export class SatSignatureService {
       // ─── REGLA 4: Verificación de Revocación (OCSP / CRL) ───
       let verificadaVia: CertValidationAprobado["metadata"]["revocacion_verificada_via"] = "OCSP_ONLINE";
       
-      if (
-        !permitirCualquierCertificado &&
-        (!esDesarrollo ||
-          (process.env.SAT_REVOCATION_CHECK_MODE &&
-            process.env.SAT_REVOCATION_CHECK_MODE !== "disabled"))
-      ) {
+      if (!esDesarrollo) {
         try {
           // Si no encontramos el emisor real (ej. certificado de desarrollo saltado), pasamos el mismo certificado como fallback para evitar crashes.
           const bufferToPass = emisorBuffer || cerBuffer;
           const isRevoked = await SatRevocationChecker.isRevoked(cerBuffer, bufferToPass);
-          
+
           if (isRevoked) {
             return {
               resultado: "RECHAZADO",
               codigo_estado: "ERROR_CERTIFICADO_REVOCADO",
               detalles: "El certificado ha sido revocado por el emisor (SAT) y ya no es válido para firmar.",
             };
-          }
-          
-          if (esDesarrollo && process.env.SAT_REVOCATION_CHECK_MODE?.startsWith('mock_')) {
-            verificadaVia = "MOCK_DEV";
           }
         } catch (error) {
           console.error("[CRÍTICO] Error conectando con el servicio de revocación del SAT", error);

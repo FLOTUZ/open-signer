@@ -62,12 +62,13 @@ PSC_URL=https://api.tu-psc.com/nom151/stamp
 # Directorio donde el backend buscará los certificados Raíz e Intermedios oficiales del SAT
 # En Producción (Docker), esto suele mapearse a "/app/certs/sat".
 # SAT_CERTS_DIR="/app/certs/sat"
-
-# Modo del Simulador de Verificación de Revocación (OCSP/CRL)
-# En Producción DEBE ser "production" o no existir. Si pones un mock_ en producción, el servidor crasheará por seguridad.
-# Valores de prueba: mock_good, mock_revoked, mock_timeout, mock_sat_down, disabled
-SAT_REVOCATION_CHECK_MODE="production"
 ```
+
+La verificación de procedencia SAT, el match de RFC y la verificación de
+revocación (OCSP/CRL) dependen todas de una sola variable: `NODE_ENV`. Con
+`NODE_ENV=production` las tres se exigen estrictamente y sin excepción; con
+`NODE_ENV=development` o `test` se acepta cualquier certificado (sea o no del
+SAT, coincida o no su RFC) y se omite la verificación de revocación.
 
 > **Nota sobre Listas de Revocación (CRL):** El sistema extrae *dinámicamente* las URLs de revocación (AIA/CDP) incrustadas dentro de cada archivo `.cer` que los usuarios suben. No existe una "URL maestra" única. Si usas el panel de administración para sincronizar una lista manualmente y el backend arroja un error `EAI_AGAIN` (falla de resolución DNS), significa que el dominio ingresado no existe o fue dado de baja (ej. dominios antiguos como `ccg.sat.gob.mx`). Usa URLs válidas como `http://www.sat.gob.mx/crl` para pruebas manuales.
 
