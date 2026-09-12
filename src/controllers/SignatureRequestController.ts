@@ -301,7 +301,10 @@ export class SignatureRequestController {
       const { titular_nombre, titular_rfc, numero_serie } =
         certValidation.metadata;
 
-      if (titular_rfc !== signatureRequest.requestedRfc) {
+      if (
+        env.SIGNATURE_ENFORCE_RFC_MATCH &&
+        titular_rfc !== signatureRequest.requestedRfc
+      ) {
         throw new AppError(
           `El RFC del certificado (${titular_rfc}) no coincide con el RFC solicitado para esta firma (${signatureRequest.requestedRfc}).`,
           400
